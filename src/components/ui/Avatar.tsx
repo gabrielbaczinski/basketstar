@@ -20,9 +20,9 @@ function initials(name: string): string {
 
 function colorFor(name: string): string {
   const colors = [
-    'bg-indigo-500', 'bg-violet-500', 'bg-fuchsia-500', 'bg-rose-500',
-    'bg-orange-500', 'bg-amber-500', 'bg-emerald-500', 'bg-teal-500',
-    'bg-sky-500', 'bg-blue-500'
+    'bg-slate-600', 'bg-blue-600', 'bg-indigo-600', 'bg-violet-600',
+    'bg-teal-600', 'bg-emerald-600', 'bg-sky-600', 'bg-cyan-600',
+    'bg-zinc-500', 'bg-slate-500'
   ]
   let sum = 0
   for (let i = 0; i < name.length; i++) sum += name.charCodeAt(i)

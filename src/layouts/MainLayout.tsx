@@ -130,7 +130,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           {/* Left slot: logo on home, empty otherwise */}
           <div className="w-10">
             {location.pathname === '/' && (
-              <div className="w-7 h-7 rounded-lg bg-[#5E6AD2] flex items-center justify-center">
+              <div className="w-7 h-7 rounded-md bg-[#5E6AD2] flex items-center justify-center">
                 <Dumbbell size={14} className="text-white" />
               </div>
             )}
@@ -144,7 +144,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           {/* Right: actions */}
           <div className="w-10 flex items-center justify-end gap-1">
             {isOffline && <WifiOff size={14} className="text-amber-500" />}
-            <button onClick={toggleDark} className="w-8 h-8 rounded-full text-gray-500 dark:text-gray-400 flex items-center justify-center" aria-label="Alternar tema">
+            <button onClick={toggleDark} className="w-8 h-8 rounded-md text-gray-500 dark:text-gray-400 flex items-center justify-center" aria-label="Alternar tema">
               {isDark ? <Sun size={17} /> : <Moon size={17} />}
             </button>
           </div>

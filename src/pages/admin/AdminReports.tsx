@@ -63,7 +63,7 @@ export default function AdminReports() {
       </div>
 
       <div className="grid gap-3 lg:grid-cols-2">
-        <div className="bg-white dark:bg-[#111111] rounded-xl shadow-sm p-5">
+        <div className="bg-white dark:bg-[#111111] rounded-lg shadow-sm p-5">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Ocupação por aula (%)</h3>
           <div className="h-72">
             <ResponsiveContainer>
@@ -78,7 +78,7 @@ export default function AdminReports() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#111111] rounded-xl shadow-sm p-5">
+        <div className="bg-white dark:bg-[#111111] rounded-lg shadow-sm p-5">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Modalidades mais populares</h3>
           <div className="h-72">
             <ResponsiveContainer>
@@ -96,7 +96,7 @@ export default function AdminReports() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-[#111111] rounded-xl shadow-sm p-5">
+      <div className="bg-white dark:bg-[#111111] rounded-lg shadow-sm p-5">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Horários de pico</h3>
         <div className="h-72">
           <ResponsiveContainer>

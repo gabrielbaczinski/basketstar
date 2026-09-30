@@ -67,7 +67,7 @@ export default function AdminClasses() {
       </div>
 
       {/* Desktop table */}
-      <div className="hidden md:block bg-white dark:bg-[#111111] rounded-xl shadow-sm overflow-hidden">
+      <div className="hidden md:block bg-white dark:bg-[#111111] rounded-lg shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
@@ -121,7 +121,7 @@ export default function AdminClasses() {
       {/* Mobile cards */}
       <div className="grid gap-2 md:hidden">
         {data.aulas.map(a => (
-          <div key={a.id} className="bg-white dark:bg-[#111111] rounded-xl shadow-sm overflow-hidden flex">
+          <div key={a.id} className="bg-white dark:bg-[#111111] rounded-lg shadow-sm overflow-hidden flex">
             <div className="w-[3px] shrink-0" style={{ backgroundColor: modalidadeAccent(a.modalidade) }} />
             <div className="flex-1 p-4">
               <div className="flex items-center justify-between mb-2">

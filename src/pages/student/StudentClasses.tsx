@@ -12,9 +12,9 @@ const MODALIDADES: ('Todas' | ModalidadeType)[] = ['Todas', 'Pilates', 'Muay Tha
 type ViewMode = 'dia' | 'semana' | 'tipo'
 
 const MOD_COLOR: Record<ModalidadeType, { dot: string; text: string; bg: string }> = {
-  'Pilates':   { dot: '#7C3AED', text: 'text-violet-700 dark:text-violet-400', bg: 'bg-violet-50 dark:bg-violet-500/10' },
-  'Muay Thai': { dot: '#DC2626', text: 'text-red-700 dark:text-red-400',       bg: 'bg-red-50 dark:bg-red-500/10' },
-  'Spinning':  { dot: '#D97706', text: 'text-amber-700 dark:text-amber-400',   bg: 'bg-amber-50 dark:bg-amber-500/10' },
+  'Pilates':   { dot: '#7C3AED', text: 'text-violet-700 dark:text-violet-400', bg: 'bg-gray-100 dark:bg-[#1F1F23]' },
+  'Muay Thai': { dot: '#DC2626', text: 'text-red-700 dark:text-red-400',       bg: 'bg-gray-100 dark:bg-[#1F1F23]' },
+  'Spinning':  { dot: '#D97706', text: 'text-amber-700 dark:text-amber-400',   bg: 'bg-gray-100 dark:bg-[#1F1F23]' },
 }
 
 function getWeekStart(offset: number): Date {
@@ -99,8 +99,8 @@ function ClassCard({ aula, dia, userId, profNome, onBook, onCancel, onFullClick 
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <ModBadge mod={aula.modalidade} />
-              {inscrito && <span className="text-[11px] font-medium text-[#5E6AD2] bg-[#EEF0FD] dark:bg-[#5E6AD2]/15 px-2 py-0.5 rounded">Inscrito</span>}
-              {naFila   && <span className="text-[11px] font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 rounded">Na fila</span>}
+              {inscrito && <span className="text-[11px] font-medium text-[#5E6AD2] bg-gray-100 dark:bg-[#1F1F23] px-2 py-0.5 rounded">Inscrito</span>}
+              {naFila   && <span className="text-[11px] font-medium text-amber-700 dark:text-amber-400 bg-gray-100 dark:bg-[#1F1F23] px-2 py-0.5 rounded">Na fila</span>}
             </div>
             <div className="flex items-center gap-3 mt-2 text-[12px] text-gray-500 dark:text-gray-400">
               <span className="inline-flex items-center gap-1"><Clock size={11} />{aula.horario}</span>
@@ -181,7 +181,7 @@ export default function StudentClasses() {
 
       {/* Notice banner */}
       {!noticeDismissed && (
-        <div className="flex items-start gap-2.5 px-4 py-3 bg-[#EEF0FD] dark:bg-[#5E6AD2]/10 text-[#3730A3] dark:text-[#A5B4FC] text-[12px]">
+        <div className="flex items-start gap-2.5 px-4 py-3 bg-gray-100 dark:bg-[#1A1A1E] text-gray-600 dark:text-gray-400 text-[12px]">
           <Info size={13} className="mt-0.5 shrink-0" />
           <span className="flex-1">Os horários são definidos pela academia. Você escolhe em quais dias quer comparecer.</span>
           <button onClick={() => setNoticeDismissed(true)} className="shrink-0 text-[11px] underline opacity-60 hover:opacity-100">Entendi</button>
@@ -296,7 +296,7 @@ export default function StudentClasses() {
                               onClick={() => inscrito ? handleCancel(aula.id, d.name) : handleBook(aula.id, d.name)}
                               disabled={d.isPast}
                               title={`${aula.modalidade} ${aula.horario} — ${d.name}`}
-                              className={`w-full text-left rounded p-1.5 mb-0.5 leading-none transition-colors ${inscrito ? `${c.bg} ${c.text} ring-1 ring-current/30` : naFila ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400' : full ? 'bg-red-50 dark:bg-red-500/10 text-red-500 dark:text-red-400' : `${c.bg} ${c.text}`} ${d.isPast ? 'opacity-30 cursor-default' : ''}`}>
+                              className={`w-full text-left rounded p-1.5 mb-0.5 leading-none transition-colors ${inscrito ? `bg-gray-100 dark:bg-[#1F1F23] ${c.text} ring-1 ring-current/30` : naFila ? 'bg-gray-100 dark:bg-[#1F1F23] text-amber-700 dark:text-amber-400' : full ? 'bg-gray-100 dark:bg-[#1F1F23] text-red-500 dark:text-red-400' : `bg-gray-100 dark:bg-[#1F1F23] ${c.text}`} ${d.isPast ? 'opacity-30 cursor-default' : ''}`}>
                               <div className="font-semibold text-[10px]">{aula.modalidade === 'Muay Thai' ? 'Muay' : aula.modalidade}</div>
                               <div className="opacity-60 text-[10px] mt-0.5">{vagas > 0 ? `${vagas}v` : 'lot.'}</div>
                             </button>
@@ -366,9 +366,9 @@ export default function StudentClasses() {
       {fullModal && (
         <Modal open={!!fullModal} title="Aula lotada" onClose={() => setFullModal(null)}>
           <div className="space-y-4">
-            <div className="flex items-start gap-2.5 p-3 bg-amber-50 dark:bg-amber-500/10 rounded">
-              <Info size={13} className="text-amber-600 shrink-0 mt-0.5" />
-              <p className="text-[12px] text-amber-800 dark:text-amber-300">
+            <div className="flex items-start gap-2.5 p-3 bg-gray-100 dark:bg-[#1A1A1E] rounded">
+              <Info size={13} className="text-gray-500 shrink-0 mt-0.5" />
+              <p className="text-[12px] text-gray-700 dark:text-gray-300">
                 {fullModal.aula.modalidade} às {fullModal.aula.horario} — {fullModal.dia} está lotada.
                 {getBookingDia(fullModal.aula, fullModal.dia).filaEspera.length > 0 &&
                   ` ${getBookingDia(fullModal.aula, fullModal.dia).filaEspera.length} na fila.`}

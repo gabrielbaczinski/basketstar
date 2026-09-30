@@ -12,10 +12,10 @@ function greeting(): string {
 }
 
 const quickActions = [
-  { to: '/aulas', icon: Calendar, label: 'Aulas', color: '#5E6AD2', bg: '#EEF0FD' },
-  { to: '/carteirinha', icon: CreditCard, label: 'Carteirinha', color: '#0EA5E9', bg: '#E0F2FE' },
-  { to: '/comunidade', icon: Megaphone, label: 'Feed', color: '#8B5CF6', bg: '#EDE9FE' },
-  { to: '/chat', icon: MessageCircle, label: 'Chat', color: '#10B981', bg: '#D1FAE5' },
+  { to: '/aulas', icon: Calendar, label: 'Aulas', color: '#5E6AD2' },
+  { to: '/carteirinha', icon: CreditCard, label: 'Carteirinha', color: '#0284C7' },
+  { to: '/comunidade', icon: Megaphone, label: 'Feed', color: '#7C3AED' },
+  { to: '/chat', icon: MessageCircle, label: 'Chat', color: '#059669' },
 ]
 
 const DIAS_SEMANA = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
@@ -62,12 +62,12 @@ export default function StudentDashboard() {
 
         {/* Quick stats row */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-[#F2F2F7] dark:bg-[#2C2C2E] rounded-2xl p-4">
+          <div className="bg-[#F2F2F7] dark:bg-[#2C2C2E] rounded-xl p-4">
             <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Aulas</p>
             <p className="text-3xl font-bold text-gray-900 dark:text-white leading-none">{minhasAulas.length}</p>
             <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">agendadas</p>
           </div>
-          <div className="bg-[#F2F2F7] dark:bg-[#2C2C2E] rounded-2xl p-4">
+          <div className="bg-[#F2F2F7] dark:bg-[#2C2C2E] rounded-xl p-4">
             <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Próxima</p>
             {minhasAulas.length > 0 ? (
               <>
@@ -99,15 +99,14 @@ export default function StudentDashboard() {
       {/* ── Quick actions (horizontal scroll on mobile) ── */}
       <section className="md:mb-8">
         <div className="flex gap-3 overflow-x-auto px-4 md:px-0 py-4 md:py-0 no-scrollbar">
-          {quickActions.map(({ to, icon: Icon, label, color, bg }) => (
+          {quickActions.map(({ to, icon: Icon, label, color }) => (
             <Link
               key={to}
               to={to}
               className="flex flex-col items-center gap-2 shrink-0"
             >
               <div
-                className="w-[60px] h-[60px] rounded-[18px] flex items-center justify-center shadow-sm active:scale-95 transition-transform"
-                style={{ backgroundColor: bg }}
+                className="w-[60px] h-[60px] rounded-xl bg-white dark:bg-[#1C1C1E] flex items-center justify-center shadow-sm active:scale-95 transition-transform"
               >
                 <Icon size={26} style={{ color }} strokeWidth={1.8} />
               </div>
@@ -127,8 +126,8 @@ export default function StudentDashboard() {
         </div>
 
         {minhasAulas.length === 0 ? (
-          <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl shadow-sm py-10 flex flex-col items-center gap-2 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-[#F2F2F7] dark:bg-[#2C2C2E] flex items-center justify-center mb-1">
+          <div className="bg-white dark:bg-[#1C1C1E] rounded-xl shadow-sm py-10 flex flex-col items-center gap-2 text-center">
+            <div className="w-14 h-14 rounded-xl bg-[#F2F2F7] dark:bg-[#2C2C2E] flex items-center justify-center mb-1">
               <Calendar size={24} className="text-gray-400" />
             </div>
             <p className="text-[15px] font-semibold text-gray-900 dark:text-white">Nenhuma aula agendada</p>
@@ -137,13 +136,13 @@ export default function StudentDashboard() {
             </p>
             <Link
               to="/aulas"
-              className="mt-3 inline-flex items-center gap-1.5 bg-[#5E6AD2] text-white text-[13px] font-semibold px-5 py-2.5 rounded-full transition-colors active:scale-95"
+              className="mt-3 inline-flex items-center gap-1.5 bg-[#5E6AD2] text-white text-[13px] font-semibold px-5 py-2.5 rounded-lg transition-colors active:scale-95"
             >
               Explorar aulas <ArrowRight size={14} />
             </Link>
           </div>
         ) : (
-          <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-[#1C1C1E] rounded-xl shadow-sm overflow-hidden">
             {minhasAulas.map((item, idx) => {
               const { aula, dia } = item
               return (
@@ -168,7 +167,7 @@ export default function StudentDashboard() {
                   </div>
                   <button
                     onClick={() => cancelClassDia(aula.id, dia)}
-                    className="w-8 h-8 rounded-full text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center justify-center transition-colors"
+                    className="w-8 h-8 rounded-md text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center justify-center transition-colors"
                     aria-label="Cancelar aula"
                   >
                     <X size={15} />
@@ -191,8 +190,8 @@ export default function StudentDashboard() {
           </div>
           <div className="space-y-3 md:grid md:gap-3 md:grid-cols-2 md:space-y-0">
             {avisosRecentes.map(av => (
-              <div key={av.id} className="bg-white dark:bg-[#1C1C1E] rounded-2xl shadow-sm p-4 flex items-start gap-3">
-                <div className="w-9 h-9 rounded-xl bg-[#EEF0FD] dark:bg-[#5E6AD2]/15 text-[#5E6AD2] flex items-center justify-center shrink-0">
+              <div key={av.id} className="bg-white dark:bg-[#1C1C1E] rounded-xl shadow-sm p-4 flex items-start gap-3">
+                <div className="w-9 h-9 rounded-lg bg-[#F4F4F5] dark:bg-[#1F1F23] text-[#5E6AD2] flex items-center justify-center shrink-0">
                   <Megaphone size={15} />
                 </div>
                 <div className="flex-1 min-w-0">

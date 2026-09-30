@@ -139,7 +139,7 @@ export default function AdminUsers() {
         onDragLeave={() => setDrag(false)}
         onDrop={onDrop}
         onClick={() => fileRef.current?.click()}
-        className={`bg-white dark:bg-[#111111] rounded-xl shadow-sm p-5 text-center cursor-pointer transition-colors ${
+        className={`bg-white dark:bg-[#111111] rounded-lg shadow-sm p-5 text-center cursor-pointer transition-colors ${
           drag ? 'shadow-[0_0_0_2px_#5E6AD2]' : 'hover:bg-gray-50 dark:hover:bg-[#1A1A1E]'
         }`}
       >
@@ -151,7 +151,7 @@ export default function AdminUsers() {
           onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}
         />
         <div className="flex flex-col items-center gap-1.5">
-          <div className="w-8 h-8 rounded-md bg-[#EEF0FD] dark:bg-[#5E6AD2]/15 text-[#5E6AD2] flex items-center justify-center">
+          <div className="w-8 h-8 rounded-md bg-[#F4F4F5] dark:bg-[#1F1F23] text-[#5E6AD2] flex items-center justify-center">
             <Upload size={16} />
           </div>
           <p className="text-sm font-medium text-gray-900 dark:text-white">Arraste um CSV ou clique para importar</p>
@@ -173,7 +173,7 @@ export default function AdminUsers() {
       </div>
 
       {/* Users table (desktop) */}
-      <div className="hidden md:block bg-white dark:bg-[#111111] rounded-xl shadow-sm overflow-hidden">
+      <div className="hidden md:block bg-white dark:bg-[#111111] rounded-lg shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
@@ -210,7 +210,7 @@ export default function AdminUsers() {
       {/* Mobile cards */}
       <div className="grid gap-2 md:hidden">
         {alunos.map(u => (
-          <div key={u.id} className="bg-white dark:bg-[#111111] rounded-xl shadow-sm p-4">
+          <div key={u.id} className="bg-white dark:bg-[#111111] rounded-lg shadow-sm p-4">
             <div className="flex items-center gap-3">
               <Avatar name={u.nome} />
               <div className="flex-1 min-w-0">
@@ -288,7 +288,7 @@ export default function AdminUsers() {
       }>
         {csvPreview && (
           <div className="space-y-4">
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-[#EEF0FD] dark:bg-[#5E6AD2]/15 text-[#5E6AD2] dark:text-[#8B95E5] text-sm">
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-[#F4F4F5] dark:bg-[#1A1A1E] text-gray-700 dark:text-gray-300 text-sm">
               <Sparkles size={14} /> A IA identificou automaticamente as colunas. Ajuste se necessário.
             </div>
 

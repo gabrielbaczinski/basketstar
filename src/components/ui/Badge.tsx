@@ -10,14 +10,14 @@ interface BadgeProps {
 }
 
 const variantMap: Record<Variant, string> = {
-  default: 'bg-gray-100 text-gray-700 dark:bg-[#1F1F23] dark:text-gray-300',
-  success: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400',
-  warning: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400',
-  danger: 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400',
-  info: 'bg-[#EEF0FD] text-[#5E6AD2] dark:bg-[#5E6AD2]/15 dark:text-[#8B95E5]',
-  purple: 'bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-400',
-  orange: 'bg-orange-50 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400',
-  red: 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400'
+  default: 'bg-gray-100 text-gray-600 dark:bg-[#1F1F23] dark:text-gray-400',
+  success: 'bg-gray-100 text-emerald-700 dark:bg-[#1F1F23] dark:text-emerald-500',
+  warning: 'bg-gray-100 text-amber-700 dark:bg-[#1F1F23] dark:text-amber-500',
+  danger:  'bg-gray-100 text-red-600 dark:bg-[#1F1F23] dark:text-red-500',
+  info:    'bg-gray-100 text-[#5E6AD2] dark:bg-[#1F1F23] dark:text-[#8B95E5]',
+  purple:  'bg-gray-100 text-violet-700 dark:bg-[#1F1F23] dark:text-violet-400',
+  orange:  'bg-gray-100 text-orange-700 dark:bg-[#1F1F23] dark:text-orange-400',
+  red:     'bg-gray-100 text-red-600 dark:bg-[#1F1F23] dark:text-red-500',
 }
 
 export default function Badge({ children, variant = 'default', className = '' }: BadgeProps) {
@@ -38,8 +38,8 @@ export function modalidadeVariant(m: ModalidadeType): Variant {
 
 export function modalidadeAccent(m: ModalidadeType): string {
   switch (m) {
-    case 'Pilates': return '#8B5CF6'
-    case 'Muay Thai': return '#EF4444'
-    case 'Spinning': return '#F97316'
+    case 'Pilates': return '#7C3AED'
+    case 'Muay Thai': return '#DC2626'
+    case 'Spinning': return '#D97706'
   }
 }
