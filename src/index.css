@@ -8,6 +8,12 @@ html, body, #root {
   padding: 0;
 }
 
+/* iOS momentum scroll */
+main { -webkit-overflow-scrolling: touch; }
+
+/* Tap highlight */
+* { -webkit-tap-highlight-color: transparent; }
+
 @layer base {
   body {
     @apply font-sans antialiased text-gray-900 dark:text-gray-100;
