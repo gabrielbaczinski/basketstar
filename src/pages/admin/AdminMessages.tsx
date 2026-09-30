@@ -56,7 +56,7 @@ export default function AdminMessages() {
 
       <div className="grid md:grid-cols-[280px_1fr] gap-3 h-[calc(100vh-14rem)] md:h-[calc(100vh-12rem)]">
         {/* Left panel */}
-        <div className="bg-white dark:bg-[#111111] rounded-xl shadow-sm overflow-hidden flex flex-col">
+        <div className="bg-white dark:bg-[#111111] rounded-lg shadow-sm overflow-hidden flex flex-col">
           <div className="px-4 py-3 shadow-[0_1px_0_0_#f1f5f9] dark:shadow-[0_1px_0_0_#1f2937]">
             <p className="text-[11px] uppercase font-medium text-gray-400 tracking-wider">Conversas</p>
           </div>
@@ -85,7 +85,7 @@ export default function AdminMessages() {
         </div>
 
         {/* Right panel */}
-        <div className="bg-white dark:bg-[#111111] rounded-xl shadow-sm overflow-hidden flex flex-col">
+        <div className="bg-white dark:bg-[#111111] rounded-lg shadow-sm overflow-hidden flex flex-col">
           {selectedId ? (
             <>
               <div className="px-4 py-3 flex items-center gap-3 shadow-[0_1px_0_0_#f1f5f9] dark:shadow-[0_1px_0_0_#1f2937]">
@@ -103,8 +103,8 @@ export default function AdminMessages() {
                       <div className="max-w-[75%]">
                         <div className={`px-3.5 py-2 text-sm ${
                           mine
-                            ? 'bg-[#5E6AD2] text-white rounded-2xl rounded-br-sm'
-                            : 'bg-[#F4F4F5] dark:bg-[#1F1F23] text-gray-900 dark:text-white rounded-2xl rounded-bl-sm'
+                            ? 'bg-[#5E6AD2] text-white rounded-lg rounded-br-sm'
+                            : 'bg-[#F4F4F5] dark:bg-[#1F1F23] text-gray-900 dark:text-white rounded-lg rounded-bl-sm'
                         }`}>
                           {m.texto}
                         </div>

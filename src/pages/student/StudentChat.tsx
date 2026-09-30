@@ -37,14 +37,14 @@ export default function StudentChat() {
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Fale diretamente com a recepção</p>
       </div>
 
-      <div className="bg-white dark:bg-[#111111] rounded-xl shadow-sm flex-1 flex flex-col overflow-hidden">
+      <div className="bg-white dark:bg-[#111111] rounded-lg shadow-sm flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="px-4 py-3 flex items-center gap-3 shadow-[0_1px_0_0_#f1f5f9] dark:shadow-[0_1px_0_0_#1f2937]">
           <Avatar name={admin?.nome ?? 'Admin'} size="md" />
           <div>
             <p className="text-sm font-semibold text-gray-900 dark:text-white">{admin?.nome}</p>
-            <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Online
+            <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500" /> Online
             </p>
           </div>
         </div>
@@ -63,8 +63,8 @@ export default function StudentChat() {
                 <div className="max-w-[75%]">
                   <div className={`px-3.5 py-2 text-sm ${
                     mine
-                      ? 'bg-[#5E6AD2] text-white rounded-2xl rounded-br-sm'
-                      : 'bg-[#F4F4F5] dark:bg-[#1F1F23] text-gray-900 dark:text-white rounded-2xl rounded-bl-sm'
+                      ? 'bg-[#5E6AD2] text-white rounded-lg rounded-br-sm'
+                      : 'bg-[#F4F4F5] dark:bg-[#1F1F23] text-gray-900 dark:text-white rounded-lg rounded-bl-sm'
                   }`}>
                     {m.texto}
                   </div>

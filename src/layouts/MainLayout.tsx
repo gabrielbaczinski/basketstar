@@ -114,7 +114,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           <h1 className="text-sm font-semibold text-gray-900 dark:text-white flex-1 truncate">{title}</h1>
           <div className="flex items-center gap-2">
             {isOffline && (
-              <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 rounded-md text-[11px] font-medium">
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#F4F4F5] dark:bg-[#1F1F23] text-gray-600 dark:text-gray-400 rounded-md text-[11px] font-medium">
                 <WifiOff size={11} /> Offline
               </span>
             )}

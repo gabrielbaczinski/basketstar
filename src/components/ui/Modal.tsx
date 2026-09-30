@@ -34,7 +34,7 @@ export default function Modal({ open, onClose, title, children, size = 'md', foo
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative w-full ${sizeMap[size]} bg-white dark:bg-[#111111] rounded-xl shadow-2xl max-h-[90vh] flex flex-col`}>
+      <div className={`relative w-full ${sizeMap[size]} bg-white dark:bg-[#111111] rounded-lg shadow-2xl max-h-[90vh] flex flex-col`}>
         {title != null && (
           <div className="flex items-center justify-between px-5 py-4">
             <h3 className="text-base font-semibold text-gray-900 dark:text-white">{title}</h3>
@@ -44,7 +44,7 @@ export default function Modal({ open, onClose, title, children, size = 'md', foo
           </div>
         )}
         <div className="px-5 pb-4 overflow-y-auto flex-1">{children}</div>
-        {footer && <div className="px-5 py-3 bg-gray-50 dark:bg-[#0D0D0D] rounded-b-xl">{footer}</div>}
+        {footer && <div className="px-5 py-3 bg-gray-50 dark:bg-[#0D0D0D] rounded-b-lg">{footer}</div>}
       </div>
     </div>
   )

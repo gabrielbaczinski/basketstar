@@ -84,7 +84,7 @@ export default function StudentDigitalCard() {
       </div>
 
       {/* QR access */}
-      <div className="bg-white dark:bg-[#111111] rounded-xl shadow-sm p-5 flex items-center gap-4">
+      <div className="bg-white dark:bg-[#111111] rounded-lg shadow-sm p-5 flex items-center gap-4">
         <div className="w-24 h-24 shrink-0 rounded-lg overflow-hidden bg-white p-1.5 shadow-sm">
           <QRPattern text={currentUser.id} />
         </div>
@@ -98,7 +98,7 @@ export default function StudentDigitalCard() {
       </div>
 
       {/* Contact */}
-      <div className="bg-white dark:bg-[#111111] rounded-xl shadow-sm p-5">
+      <div className="bg-white dark:bg-[#111111] rounded-lg shadow-sm p-5">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Dados de contato</h3>
         <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
           <li className="flex items-center gap-2">

@@ -29,7 +29,7 @@ export default function AdminSettings() {
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Regras de agendamento e fila de espera</p>
       </div>
 
-      <div className="bg-white dark:bg-[#111111] rounded-xl shadow-sm p-5">
+      <div className="bg-white dark:bg-[#111111] rounded-lg shadow-sm p-5">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Política de cancelamento</h3>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Tempo mínimo de antecedência para cancelar uma aula sem penalidade</p>
         <div className="grid gap-2 sm:grid-cols-2">
@@ -38,7 +38,7 @@ export default function AdminSettings() {
               key={opt.value}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${
                 cfg.tempoLimiteCancelamentoMinutos === opt.value
-                  ? 'bg-[#EEF0FD] dark:bg-[#5E6AD2]/15'
+                  ? 'bg-[#F4F4F5] dark:bg-[#1F1F23] shadow-[0_0_0_1.5px_#5E6AD2]'
                   : 'bg-[#FAFAFA] dark:bg-[#0D0D0D] hover:bg-gray-100 dark:hover:bg-[#1A1A1E]'
               }`}
             >
@@ -55,7 +55,7 @@ export default function AdminSettings() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-[#111111] rounded-xl shadow-sm p-5">
+      <div className="bg-white dark:bg-[#111111] rounded-lg shadow-sm p-5">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Modo da fila de espera</h3>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Como as vagas são liberadas quando alguém cancela</p>
         <div className="grid gap-2 sm:grid-cols-2">
@@ -63,7 +63,7 @@ export default function AdminSettings() {
             onClick={() => setCfg(c => ({ ...c, modoFilaEspera: 'AUTOMATICO' }))}
             className={`p-4 rounded-lg text-left transition-colors ${
               cfg.modoFilaEspera === 'AUTOMATICO'
-                ? 'bg-[#EEF0FD] dark:bg-[#5E6AD2]/15'
+                ? 'bg-[#F4F4F5] dark:bg-[#1F1F23] shadow-[0_0_0_1.5px_#5E6AD2]'
                 : 'bg-[#FAFAFA] dark:bg-[#0D0D0D] hover:bg-gray-100 dark:hover:bg-[#1A1A1E]'
             }`}
           >
@@ -74,7 +74,7 @@ export default function AdminSettings() {
             onClick={() => setCfg(c => ({ ...c, modoFilaEspera: 'CORRIDA' }))}
             className={`p-4 rounded-lg text-left transition-colors ${
               cfg.modoFilaEspera === 'CORRIDA'
-                ? 'bg-[#EEF0FD] dark:bg-[#5E6AD2]/15'
+                ? 'bg-[#F4F4F5] dark:bg-[#1F1F23] shadow-[0_0_0_1.5px_#5E6AD2]'
                 : 'bg-[#FAFAFA] dark:bg-[#0D0D0D] hover:bg-gray-100 dark:hover:bg-[#1A1A1E]'
             }`}
           >
@@ -84,7 +84,7 @@ export default function AdminSettings() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-[#111111] rounded-xl shadow-sm p-5">
+      <div className="bg-white dark:bg-[#111111] rounded-lg shadow-sm p-5">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Antecedência para agendamento</h3>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Quantos dias no futuro o aluno pode agendar</p>
         <div className="flex items-center gap-4">
@@ -102,7 +102,7 @@ export default function AdminSettings() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-[#111111] rounded-xl shadow-sm p-5">
+      <div className="bg-white dark:bg-[#111111] rounded-lg shadow-sm p-5">
         <div className="flex items-center justify-between gap-4">
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Permitir recorrência</h3>

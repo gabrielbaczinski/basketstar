@@ -46,14 +46,14 @@ export default function AIChat() {
     <>
       <button
         onClick={() => setOpen(o => !o)}
-        className="fixed bottom-20 md:bottom-6 right-6 z-40 w-10 h-10 rounded-full bg-[#5E6AD2] hover:bg-[#4B55B8] text-white shadow-md flex items-center justify-center transition-colors"
+        className="fixed bottom-20 md:bottom-6 right-6 z-40 w-10 h-10 rounded-lg bg-[#5E6AD2] hover:bg-[#4B55B8] text-white shadow-md flex items-center justify-center transition-colors"
         aria-label="Chat com IA"
       >
         <Sparkles size={18} />
       </button>
 
       {open && (
-        <div className="fixed bottom-32 md:bottom-20 right-6 z-40 w-[calc(100vw-3rem)] max-w-sm bg-white dark:bg-[#111111] rounded-xl shadow-2xl flex flex-col overflow-hidden" style={{ maxHeight: '70vh' }}>
+        <div className="fixed bottom-32 md:bottom-20 right-6 z-40 w-[calc(100vw-3rem)] max-w-sm bg-white dark:bg-[#111111] rounded-lg shadow-2xl flex flex-col overflow-hidden" style={{ maxHeight: '70vh' }}>
           <div className="flex items-center justify-between px-4 py-3 shadow-[0_1px_0_0_#f1f5f9] dark:shadow-[0_1px_0_0_#1f2937]">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-md bg-[#5E6AD2] text-white flex items-center justify-center">
@@ -73,8 +73,8 @@ export default function AIChat() {
               <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[80%] px-3 py-2 text-sm ${
                   m.role === 'user'
-                    ? 'bg-[#5E6AD2] text-white rounded-2xl rounded-br-sm'
-                    : 'bg-[#F4F4F5] dark:bg-[#1F1F23] text-gray-900 dark:text-white rounded-2xl rounded-bl-sm'
+                    ? 'bg-[#5E6AD2] text-white rounded-lg rounded-br-sm'
+                    : 'bg-[#F4F4F5] dark:bg-[#1F1F23] text-gray-900 dark:text-white rounded-lg rounded-bl-sm'
                 }`}>
                   {m.text}
                 </div>

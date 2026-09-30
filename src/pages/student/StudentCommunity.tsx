@@ -15,7 +15,7 @@ export default function StudentCommunity() {
       </div>
 
       {data.comunidadeAvisos.length === 0 ? (
-        <div className="bg-white dark:bg-[#111111] rounded-xl shadow-sm py-16 flex flex-col items-center gap-2 text-center">
+        <div className="bg-white dark:bg-[#111111] rounded-lg shadow-sm py-16 flex flex-col items-center gap-2 text-center">
           <Megaphone size={24} className="text-gray-400" />
           <p className="text-sm font-medium text-gray-900 dark:text-white">Nenhum aviso ainda</p>
           <p className="text-xs text-gray-500 dark:text-gray-400">Novidades da academia aparecerão aqui.</p>
@@ -23,7 +23,7 @@ export default function StudentCommunity() {
       ) : (
         <div className="space-y-3">
           {data.comunidadeAvisos.map(av => (
-            <article key={av.id} className="bg-white dark:bg-[#111111] rounded-xl shadow-sm p-5">
+            <article key={av.id} className="bg-white dark:bg-[#111111] rounded-lg shadow-sm p-5">
               <div className="flex items-start justify-between gap-3 mb-2">
                 <h2 className="text-sm font-semibold text-gray-900 dark:text-white leading-snug">{av.titulo}</h2>
                 <span className="text-xs text-gray-400 whitespace-nowrap shrink-0">

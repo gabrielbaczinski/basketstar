@@ -11,7 +11,7 @@ export default function HelpButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-20 md:bottom-6 right-16 z-40 w-10 h-10 rounded-full bg-white dark:bg-[#111111] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 shadow-md flex items-center justify-center transition-colors"
+        className="fixed bottom-20 md:bottom-6 right-16 z-40 w-10 h-10 rounded-lg bg-white dark:bg-[#111111] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 shadow-md flex items-center justify-center transition-colors"
         aria-label="Ajuda"
       >
         <HelpCircle size={18} />

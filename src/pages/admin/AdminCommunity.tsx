@@ -37,7 +37,7 @@ export default function AdminCommunity() {
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Publique avisos para todos os alunos</p>
       </div>
 
-      <div className="bg-white dark:bg-[#111111] rounded-xl shadow-sm p-5">
+      <div className="bg-white dark:bg-[#111111] rounded-lg shadow-sm p-5">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 inline-flex items-center gap-2">
           <Megaphone size={14} className="text-[#5E6AD2]" /> Novo aviso
         </h3>
@@ -69,13 +69,13 @@ export default function AdminCommunity() {
       <div>
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Avisos publicados</h3>
         {data.comunidadeAvisos.length === 0 ? (
-          <div className="bg-white dark:bg-[#111111] rounded-xl shadow-sm py-10 text-center">
+          <div className="bg-white dark:bg-[#111111] rounded-lg shadow-sm py-10 text-center">
             <p className="text-sm text-gray-500 dark:text-gray-400">Nenhum aviso publicado.</p>
           </div>
         ) : (
           <div className="space-y-2">
             {data.comunidadeAvisos.map(av => (
-              <article key={av.id} className="bg-white dark:bg-[#111111] rounded-xl shadow-sm p-4">
+              <article key={av.id} className="bg-white dark:bg-[#111111] rounded-lg shadow-sm p-4">
                 <div className="flex items-start gap-3">
                   <Avatar name={authorName(av.autorId)} size="sm" />
                   <div className="flex-1 min-w-0">

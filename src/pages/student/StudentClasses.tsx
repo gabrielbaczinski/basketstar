@@ -113,11 +113,11 @@ function ClassCard({ aula, dia, userId, profNome, onBook, onCancel, onFullClick 
           </div>
           <div className="shrink-0 self-center">
             {inscrito ? (
-              <button onClick={onCancel} className="text-[12px] font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 px-3 py-1.5 rounded transition-colors">Cancelar</button>
+              <button onClick={onCancel} className="text-[12px] font-medium text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-[#1F1F23] px-3 py-1.5 rounded transition-colors">Cancelar</button>
             ) : naFila ? (
               <button disabled className="text-[12px] font-medium text-gray-400 px-3 py-1.5 rounded cursor-default">Na fila</button>
             ) : full ? (
-              <button onClick={onFullClick} className="text-[12px] font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 px-3 py-1.5 rounded transition-colors">Lotada</button>
+              <button onClick={onFullClick} className="text-[12px] font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#1F1F23] px-3 py-1.5 rounded transition-colors">Lotada</button>
             ) : (
               <button onClick={onBook} className="text-[12px] font-medium bg-[#5E6AD2] hover:bg-[#4B55B8] text-white px-3 py-1.5 rounded transition-colors">Agendar</button>
             )}
@@ -346,7 +346,7 @@ export default function StudentClasses() {
                             return (
                               <button key={dia}
                                 onClick={() => inscrito ? handleCancel(aula.id, dia) : handleBook(aula.id, dia)}
-                                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${inscrito ? 'bg-[#5E6AD2] text-white' : naFila ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400' : full ? 'bg-red-50 dark:bg-red-500/10 text-red-500' : 'bg-[#F4F4F5] dark:bg-[#1F1F23] text-gray-700 dark:text-gray-300 hover:bg-[#E4E4E7]'}`}>
+                                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${inscrito ? 'bg-[#5E6AD2] text-white' : naFila ? 'bg-[#F4F4F5] dark:bg-[#1F1F23] text-amber-700 dark:text-amber-500' : full ? 'bg-[#F4F4F5] dark:bg-[#1F1F23] text-red-500 dark:text-red-400' : 'bg-[#F4F4F5] dark:bg-[#1F1F23] text-gray-700 dark:text-gray-300 hover:bg-[#E4E4E7]'}`}>
                                 {dia.slice(0, 3)}
                                 <span className="opacity-60 text-[10px]">{inscrito ? ' ×' : naFila ? ' fila' : full ? ' lot.' : ` ${vagas}v`}</span>
                               </button>

@@ -16,10 +16,10 @@ export default function ProfileSwitcher({ mobile }: Props) {
 
   if (mobile) {
     return (
-      <div className="inline-flex items-center bg-black/10 dark:bg-white/10 backdrop-blur-sm rounded-full p-0.5">
+      <div className="inline-flex items-center bg-black/10 dark:bg-white/10 backdrop-blur-sm rounded-md p-0.5">
         <button
           onClick={() => set('aluno')}
-          className={`text-[11px] font-semibold px-3 py-1 rounded-full transition-all ${
+          className={`text-[11px] font-semibold px-3 py-1 rounded-sm transition-all ${
             activeView === 'aluno'
               ? 'bg-white dark:bg-[#2C2C2E] text-gray-900 dark:text-white shadow-sm'
               : 'text-gray-500 dark:text-gray-400'
@@ -29,7 +29,7 @@ export default function ProfileSwitcher({ mobile }: Props) {
         </button>
         <button
           onClick={() => set('admin')}
-          className={`text-[11px] font-semibold px-3 py-1 rounded-full transition-all ${
+          className={`text-[11px] font-semibold px-3 py-1 rounded-sm transition-all ${
             activeView === 'admin'
               ? 'bg-white dark:bg-[#2C2C2E] text-gray-900 dark:text-white shadow-sm'
               : 'text-gray-500 dark:text-gray-400'
