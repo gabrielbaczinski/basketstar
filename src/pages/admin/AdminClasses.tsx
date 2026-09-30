@@ -7,6 +7,7 @@ import Modal from '../../components/ui/Modal'
 import OccupancyBar from '../../components/ui/OccupancyBar'
 import { useToast } from '../../context/ToastContext'
 import Avatar from '../../components/ui/Avatar'
+import { getBookingDia, getMaxOcupados } from '../../utils/aulaUtils'
 
 type Presence = 'present' | 'absent' | 'unset'
 
@@ -15,6 +16,7 @@ export default function AdminClasses() {
   const { showToast } = useToast()
   const [editing, setEditing] = useState<Aula | null>(null)
   const [attendance, setAttendance] = useState<Aula | null>(null)
+  const [attendanceDay, setAttendanceDay] = useState<string>('')
   const [attendanceState, setAttendanceState] = useState<Record<string, Presence>>({})
 
   const professorNome = (id: string) => data.professores.find(p => p.id === id)?.nome ?? '—'
@@ -22,18 +24,20 @@ export default function AdminClasses() {
 
   const openAttendance = (aula: Aula) => {
     setAttendance(aula)
+    setAttendanceDay(aula.diasSemana[0] ?? '')
   }
 
-  // When attendance modal opens (or the underlying data changes), preload state from context
+  // When attendance modal opens or the selected day changes, preload state from context
   useEffect(() => {
-    if (!attendance) return
+    if (!attendance || !attendanceDay) return
     const saved = getAttendance(attendance.id)
+    const booking = getBookingDia(attendance, attendanceDay)
     const init: Record<string, Presence> = {}
-    attendance.inscritos.forEach(id => {
+    booking.inscritos.forEach(id => {
       init[id] = (saved[id] as Presence) ?? 'unset'
     })
     setAttendanceState(init)
-  }, [attendance, getAttendance])
+  }, [attendance, attendanceDay, getAttendance])
 
   const saveEdit = (aula: Aula) => {
     updateAula(aula)
@@ -50,6 +54,10 @@ export default function AdminClasses() {
     showToast('Chamada registrada.', 'success')
     setAttendance(null)
   }
+
+  const currentInscritos = attendance && attendanceDay
+    ? getBookingDia(attendance, attendanceDay).inscritos
+    : []
 
   return (
     <div className="space-y-5 max-w-6xl">
@@ -85,7 +93,7 @@ export default function AdminClasses() {
                   <td className="px-5 py-3 text-gray-500 dark:text-gray-400 text-xs">{a.diasSemana.join(', ')}</td>
                   <td className="px-5 py-3 font-medium text-gray-900 dark:text-white">{a.horario}</td>
                   <td className="px-5 py-3 min-w-[180px]">
-                    <OccupancyBar ocupadas={a.vagasOcupadas} totais={a.vagasTotais} />
+                    <OccupancyBar ocupadas={getMaxOcupados(a)} totais={a.vagasTotais} />
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex justify-end gap-1.5">
@@ -123,7 +131,7 @@ export default function AdminClasses() {
               <p className="text-sm text-gray-700 dark:text-gray-300">{professorNome(a.professorId)}</p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{a.diasSemana.join(', ')}</p>
               <div className="my-3">
-                <OccupancyBar ocupadas={a.vagasOcupadas} totais={a.vagasTotais} />
+                <OccupancyBar ocupadas={getMaxOcupados(a)} totais={a.vagasTotais} />
               </div>
               <div className="flex gap-2">
                 <button
@@ -173,45 +181,62 @@ export default function AdminClasses() {
         }
       >
         {attendance && (
-          attendance.inscritos.length === 0 ? (
-            <p className="text-center text-sm text-gray-500 dark:text-gray-400 py-6">Nenhum aluno inscrito.</p>
-          ) : (
-            <div className="space-y-1.5">
-              {attendance.inscritos.map(id => {
-                const st = attendanceState[id] ?? 'unset'
-                return (
-                  <div key={id} className="flex items-center gap-3 p-2.5 bg-[#FAFAFA] dark:bg-[#0D0D0D] rounded-lg">
-                    <Avatar name={userName(id)} size="sm" />
-                    <span className="flex-1 text-sm text-gray-900 dark:text-white">{userName(id)}</span>
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => setAttendanceState(s => ({ ...s, [id]: 'present' }))}
-                        className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
-                          st === 'present'
-                            ? 'bg-emerald-500 text-white'
-                            : 'bg-white dark:bg-[#1A1A1E] text-gray-500 dark:text-gray-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10'
-                        }`}
-                        aria-label="Presente"
-                      >
-                        <Check size={14} />
-                      </button>
-                      <button
-                        onClick={() => setAttendanceState(s => ({ ...s, [id]: 'absent' }))}
-                        className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
-                          st === 'absent'
-                            ? 'bg-red-500 text-white'
-                            : 'bg-white dark:bg-[#1A1A1E] text-gray-500 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-500/10'
-                        }`}
-                        aria-label="Ausente"
-                      >
-                        <X size={14} />
-                      </button>
+          <div className="space-y-4">
+            {/* Day selector */}
+            {attendance.diasSemana.length > 1 && (
+              <div className="flex gap-1.5 flex-wrap">
+                {attendance.diasSemana.map(d => (
+                  <button
+                    key={d}
+                    onClick={() => setAttendanceDay(d)}
+                    className={`px-3 py-1 rounded text-xs font-medium transition-colors ${attendanceDay === d ? 'bg-[#5E6AD2] text-white' : 'bg-[#F4F4F5] dark:bg-[#1F1F23] text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#2A2A30]'}`}
+                  >
+                    {d}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {currentInscritos.length === 0 ? (
+              <p className="text-center text-sm text-gray-500 dark:text-gray-400 py-6">Nenhum aluno inscrito em {attendanceDay}.</p>
+            ) : (
+              <div className="space-y-1.5">
+                {currentInscritos.map(id => {
+                  const st = attendanceState[id] ?? 'unset'
+                  return (
+                    <div key={id} className="flex items-center gap-3 p-2.5 bg-[#FAFAFA] dark:bg-[#0D0D0D] rounded-lg">
+                      <Avatar name={userName(id)} size="sm" />
+                      <span className="flex-1 text-sm text-gray-900 dark:text-white">{userName(id)}</span>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => setAttendanceState(s => ({ ...s, [id]: 'present' }))}
+                          className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
+                            st === 'present'
+                              ? 'bg-emerald-500 text-white'
+                              : 'bg-white dark:bg-[#1A1A1E] text-gray-500 dark:text-gray-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10'
+                          }`}
+                          aria-label="Presente"
+                        >
+                          <Check size={14} />
+                        </button>
+                        <button
+                          onClick={() => setAttendanceState(s => ({ ...s, [id]: 'absent' }))}
+                          className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
+                            st === 'absent'
+                              ? 'bg-red-500 text-white'
+                              : 'bg-white dark:bg-[#1A1A1E] text-gray-500 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-500/10'
+                          }`}
+                          aria-label="Ausente"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
-            </div>
-          )
+                  )
+                })}
+              </div>
+            )}
+          </div>
         )}
       </Modal>
     </div>
@@ -239,7 +264,7 @@ function EditAulaModal({ aula, onClose, onSave, professoresList }: EditModalProp
           Cancelar
         </button>
         <button
-          onClick={() => onSave({ ...state, vagasOcupadas: Math.min(state.vagasOcupadas, state.vagasTotais) })}
+          onClick={() => onSave(state)}
           className="bg-[#5E6AD2] hover:bg-[#4B55B8] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
         >
           Salvar

@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { Users, CalendarDays, TrendingUp, XCircle, Sparkles } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts'
 import { useApp } from '../../context/AppContext'
+import { getMaxOcupados, getMediaOcupacaoPct } from '../../utils/aulaUtils'
 
 interface MetricProps {
   label: string
@@ -35,9 +36,10 @@ export default function AdminDashboard() {
   const stats = useMemo(() => {
     const totalAlunos = data.usuarios.filter(u => u.role === 'aluno').length
     const aulasHoje = data.aulas.length
-    const totalOcupadas = data.aulas.reduce((s, a) => s + a.vagasOcupadas, 0)
-    const totalVagas = data.aulas.reduce((s, a) => s + a.vagasTotais, 0)
-    const ocupacao = totalVagas > 0 ? Math.round((totalOcupadas / totalVagas) * 100) : 0
+    const ocupacaoPcts = data.aulas.map(a => getMediaOcupacaoPct(a))
+    const ocupacao = ocupacaoPcts.length > 0
+      ? Math.round((ocupacaoPcts.reduce((s, v) => s + v, 0) / ocupacaoPcts.length) * 100)
+      : 0
     const cancelamentos = 6
     return { totalAlunos, aulasHoje, ocupacao, cancelamentos }
   }, [data])
@@ -47,7 +49,7 @@ export default function AdminDashboard() {
     data.aulas.forEach(a => {
       const key = a.modalidade
       if (!byMod[key]) byMod[key] = { modalidade: key, ocupadas: 0, total: 0 }
-      byMod[key].ocupadas += a.vagasOcupadas
+      byMod[key].ocupadas += getMaxOcupados(a)
       byMod[key].total += a.vagasTotais
     })
     return Object.values(byMod)

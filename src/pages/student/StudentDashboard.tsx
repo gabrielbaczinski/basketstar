@@ -18,12 +18,23 @@ const quickActions = [
   { to: '/chat', icon: MessageCircle, label: 'Chat', color: '#10B981', bg: '#D1FAE5' },
 ]
 
+const DIAS_SEMANA = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
+
 export default function StudentDashboard() {
-  const { data, currentUser, cancelClass } = useApp()
+  const { data, currentUser, cancelClassDia } = useApp()
 
   const minhasAulas = useMemo(() => {
     if (!currentUser) return []
-    return data.aulas.filter(a => a.inscritos.includes(currentUser.id))
+    const result: { aula: typeof data.aulas[0]; dia: string }[] = []
+    data.aulas.forEach(aula => {
+      aula.diasSemana.forEach(dia => {
+        const booking = aula.bookingsPorDia[dia]
+        if (booking?.inscritos.includes(currentUser.id)) {
+          result.push({ aula, dia })
+        }
+      })
+    })
+    return result.sort((a, b) => DIAS_SEMANA.indexOf(a.dia) - DIAS_SEMANA.indexOf(b.dia))
   }, [data.aulas, currentUser])
 
   const professorNome = (id: string) => data.professores.find(p => p.id === id)?.nome ?? '—'
@@ -60,8 +71,8 @@ export default function StudentDashboard() {
             <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Próxima</p>
             {minhasAulas.length > 0 ? (
               <>
-                <p className="text-xl font-bold text-gray-900 dark:text-white leading-tight mt-1">{minhasAulas[0].horario}</p>
-                <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1 truncate">{minhasAulas[0].modalidade}</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-white leading-tight mt-1">{minhasAulas[0].aula.horario}</p>
+                <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1 truncate">{minhasAulas[0].aula.modalidade}</p>
               </>
             ) : (
               <p className="text-[13px] text-gray-400 dark:text-gray-500 mt-2">Nenhuma</p>
@@ -133,35 +144,38 @@ export default function StudentDashboard() {
           </div>
         ) : (
           <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl shadow-sm overflow-hidden">
-            {minhasAulas.map((a, idx) => (
-              <div
-                key={a.id}
-                className={`flex items-center gap-3 px-4 py-4 active:bg-gray-50 dark:active:bg-[#2C2C2E] transition-colors ${idx % 2 === 1 ? 'bg-[#F9F9F9] dark:bg-[#242424]' : ''}`}
-              >
+            {minhasAulas.map((item, idx) => {
+              const { aula, dia } = item
+              return (
                 <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: `${modalidadeAccent(a.modalidade)}20` }}
+                  key={`${aula.id}-${dia}`}
+                  className={`flex items-center gap-3 px-4 py-4 active:bg-gray-50 dark:active:bg-[#2C2C2E] transition-colors ${idx % 2 === 1 ? 'bg-[#F9F9F9] dark:bg-[#242424]' : ''}`}
                 >
-                  <Calendar size={18} style={{ color: modalidadeAccent(a.modalidade) }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[14px] font-semibold text-gray-900 dark:text-white">{a.modalidade}</span>
-                    <Badge variant={modalidadeVariant(a.modalidade)} className="text-[10px]">{a.horario}</Badge>
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: `${modalidadeAccent(aula.modalidade)}20` }}
+                  >
+                    <Calendar size={18} style={{ color: modalidadeAccent(aula.modalidade) }} />
                   </div>
-                  <p className="text-[12px] text-gray-400 dark:text-gray-500 mt-0.5 inline-flex items-center gap-1 truncate">
-                    <User size={10} /> {professorNome(a.professorId)} · {a.diasSemana.slice(0, 2).join(', ')}
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[14px] font-semibold text-gray-900 dark:text-white">{aula.modalidade}</span>
+                      <Badge variant={modalidadeVariant(aula.modalidade)} className="text-[10px]">{aula.horario}</Badge>
+                    </div>
+                    <p className="text-[12px] text-gray-400 dark:text-gray-500 mt-0.5 inline-flex items-center gap-1 truncate">
+                      <User size={10} /> {professorNome(aula.professorId)} · {dia}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => cancelClassDia(aula.id, dia)}
+                    className="w-8 h-8 rounded-full text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center justify-center transition-colors"
+                    aria-label="Cancelar aula"
+                  >
+                    <X size={15} />
+                  </button>
                 </div>
-                <button
-                  onClick={() => cancelClass(a.id)}
-                  className="w-8 h-8 rounded-full text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center justify-center transition-colors"
-                  aria-label="Cancelar aula"
-                >
-                  <X size={15} />
-                </button>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </section>

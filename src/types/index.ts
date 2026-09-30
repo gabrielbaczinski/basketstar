@@ -16,6 +16,11 @@ export interface Professor {
   foto?: string
 }
 
+export interface BookingDia {
+  inscritos: string[]
+  filaEspera: string[]
+}
+
 export interface Aula {
   id: string
   modalidade: ModalidadeType
@@ -23,9 +28,8 @@ export interface Aula {
   horario: string
   diasSemana: string[]
   vagasTotais: number
-  vagasOcupadas: number
-  inscritos: string[]
-  filaEspera: string[]
+  // Per-day bookings — key is day name ("Segunda", "Terça", etc.)
+  bookingsPorDia: Record<string, BookingDia>
 }
 
 export interface Usuario {

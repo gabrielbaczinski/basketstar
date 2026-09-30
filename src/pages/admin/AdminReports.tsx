@@ -5,6 +5,7 @@ import { useApp } from '../../context/AppContext'
 import { useToast } from '../../context/ToastContext'
 import { modalidadeAccent } from '../../components/ui/Badge'
 import type { ModalidadeType } from '../../types'
+import { getMaxOcupados, getMediaOcupacaoPct } from '../../utils/aulaUtils'
 
 export default function AdminReports() {
   const { data } = useApp()
@@ -12,12 +13,12 @@ export default function AdminReports() {
 
   const occByClass = useMemo(() => data.aulas.map(a => ({
     aula: `${a.modalidade} ${a.horario}`,
-    ocupacao: Math.round((a.vagasOcupadas / a.vagasTotais) * 100)
+    ocupacao: Math.round(getMediaOcupacaoPct(a) * 100)
   })), [data.aulas])
 
   const modShare = useMemo(() => {
     const byMod: Record<string, number> = {}
-    data.aulas.forEach(a => { byMod[a.modalidade] = (byMod[a.modalidade] || 0) + a.vagasOcupadas })
+    data.aulas.forEach(a => { byMod[a.modalidade] = (byMod[a.modalidade] || 0) + getMaxOcupados(a) })
     return Object.entries(byMod).map(([name, value]) => ({ name, value }))
   }, [data.aulas])
 
