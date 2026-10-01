@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ChevronLeft, ChevronRight, Info, Clock, User, CalendarCheck, LayoutGrid, Tag, SlidersHorizontal, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronDown, Info, Clock, User, CalendarCheck, LayoutGrid, Tag, SlidersHorizontal, X } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import type { Aula, ModalidadeType } from '../../types'
 import { getBookingDia, getVagasDisponiveisDia, isInscritoDia, isNaFilaDia } from '../../utils/aulaUtils'
@@ -60,28 +60,34 @@ function occupancyColor(pct: number) {
   return 'bg-emerald-500'
 }
 
-const PILL_BASE = 'shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors cursor-pointer'
-const PILL_ACTIVE = 'bg-[#5E6AD2] text-white shadow-sm'
-const PILL_IDLE = 'bg-white dark:bg-[#1A1A1E] text-gray-600 dark:text-gray-400 shadow-sm hover:bg-gray-50 dark:hover:bg-[#1F1F23]'
+const VIEW_SEG_ACTIVE = 'bg-white dark:bg-[#2A2A30] text-gray-900 dark:text-white shadow-sm'
+const VIEW_SEG_IDLE = 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
 
-function ModBadge({ mod }: { mod: ModalidadeType }) {
-  const c = MOD_COLOR[mod]
-  return (
-    <span className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded ${c.bg} ${c.text}`}>
-      <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: c.dot }} />
-      {mod}
-    </span>
-  )
+function ModDot({ mod }: { mod: ModalidadeType }) {
+  return <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: MOD_COLOR[mod].dot }} />
 }
 
-function OccBar({ occupied, total }: { occupied: number; total: number }) {
-  const pct = total > 0 ? occupied / total : 0
+function FilterSelect({
+  value, onChange, active, defaultValue, defaultLabel, options,
+}: {
+  value: string; onChange: (v: string) => void; active: boolean
+  defaultValue: string; defaultLabel: string; options: { value: string; label: string }[]
+}) {
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 h-1 rounded-full bg-gray-100 dark:bg-[#2A2A30] overflow-hidden">
-        <div className={`h-full rounded-full transition-all ${occupancyColor(pct)}`} style={{ width: `${Math.min(pct * 100, 100)}%` }} />
-      </div>
-      <span className="text-[11px] tabular-nums text-gray-400 dark:text-gray-500 shrink-0">{occupied}/{total}</span>
+    <div className="relative shrink-0">
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className={`appearance-none cursor-pointer text-[12px] font-medium rounded-lg pl-3 pr-7 py-1.5 outline-none transition-all ${
+          active
+            ? 'bg-[#5E6AD2] text-white shadow-sm'
+            : 'bg-white dark:bg-[#1A1A1E] text-gray-600 dark:text-gray-400 shadow-[0_0_0_1px_#E5E7EB] dark:shadow-[0_0_0_1px_#2A2A30] hover:shadow-[0_0_0_1px_#D1D5DB] dark:hover:shadow-[0_0_0_1px_#3A3A40]'
+        }`}
+      >
+        <option value={defaultValue}>{defaultLabel}</option>
+        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
+      <ChevronDown size={10} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${active ? 'text-white' : 'text-gray-400'}`} />
     </div>
   )
 }
@@ -90,42 +96,69 @@ function ClassCard({ aula, dia, userId, profNome, onBook, onCancel, onFullClick 
   aula: Aula; dia: string; userId: string; profNome: string
   onBook: () => void; onCancel: () => void; onFullClick: () => void
 }) {
-  const booking = getBookingDia(aula, dia)
-  const vagas   = getVagasDisponiveisDia(aula, dia)
+  const booking  = getBookingDia(aula, dia)
+  const vagas    = getVagasDisponiveisDia(aula, dia)
   const inscrito = isInscritoDia(aula, dia, userId)
   const naFila   = isNaFilaDia(aula, dia, userId)
   const full     = vagas <= 0
+  const pct      = aula.vagasTotais > 0 ? booking.inscritos.length / aula.vagasTotais : 0
+  const c        = MOD_COLOR[aula.modalidade]
+
   return (
-    <div className={`bg-white dark:bg-[#111111] rounded-lg shadow-sm flex overflow-hidden transition-shadow hover:shadow-md ${inscrito ? 'ring-1 ring-[#5E6AD2]/40' : ''}`}>
-      <div className="w-[3px] shrink-0" style={{ backgroundColor: MOD_COLOR[aula.modalidade].dot }} />
-      <div className="flex-1 px-4 py-3 min-w-0">
+    <div className={`bg-white dark:bg-[#111111] rounded-xl shadow-sm flex overflow-hidden transition-all hover:shadow-md active:shadow-sm ${inscrito ? 'ring-1 ring-[#5E6AD2]/25 bg-[#5E6AD2]/[0.02] dark:bg-[#5E6AD2]/[0.04]' : ''}`}>
+      <div className="w-1 shrink-0" style={{ backgroundColor: c.dot }} />
+      <div className="flex-1 px-4 py-3.5 min-w-0">
+        {/* Row 1: modalidade + status + time */}
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <ModBadge mod={aula.modalidade} />
-              {inscrito && <span className="text-[11px] font-medium text-[#5E6AD2] bg-[#5E6AD2]/10 dark:bg-[#5E6AD2]/15 px-2 py-0.5 rounded">Inscrito</span>}
-              {naFila   && <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-[#1F1F23] px-2 py-0.5 rounded">Na fila</span>}
+              <span className={`text-[13px] font-semibold ${c.text}`}>{aula.modalidade}</span>
+              {inscrito && <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded-full leading-none">✓ Inscrito</span>}
+              {naFila   && <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-1.5 py-0.5 rounded-full leading-none">Na fila</span>}
             </div>
-            <div className="flex items-center gap-3 mt-2 text-[12px] text-gray-500 dark:text-gray-400">
-              <span className="inline-flex items-center gap-1"><Clock size={11} />{aula.horario}</span>
-              <span className="inline-flex items-center gap-1"><User size={11} />{profNome}</span>
-            </div>
-            <div className="mt-2"><OccBar occupied={booking.inscritos.length} total={aula.vagasTotais} /></div>
-            {booking.filaEspera.length > 0 && (
-              <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">{booking.filaEspera.length} na fila de espera</p>
-            )}
+            <p className="text-[12px] text-gray-400 dark:text-gray-500 mt-0.5 flex items-center gap-1 truncate">
+              <User size={10} /> {profNome}
+            </p>
           </div>
-          <div className="shrink-0 self-center">
-            {inscrito ? (
-              <button onClick={onCancel} className="text-[12px] font-medium text-red-500 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-[#1F1F23] px-3 py-1.5 rounded-md transition-colors">Cancelar</button>
-            ) : naFila ? (
-              <button disabled className="text-[12px] font-medium text-gray-400 px-3 py-1.5 rounded-md cursor-default">Na fila</button>
-            ) : full ? (
-              <button onClick={onFullClick} className="text-[12px] font-medium text-gray-400 hover:bg-gray-100 dark:hover:bg-[#1F1F23] px-3 py-1.5 rounded-md transition-colors">Lotada</button>
-            ) : (
-              <button onClick={onBook} className="text-[12px] font-semibold bg-[#5E6AD2] hover:bg-[#4B55B8] text-white px-3 py-1.5 rounded-md transition-colors shadow-sm">Agendar</button>
-            )}
+          <div className="text-right shrink-0">
+            <p className="text-[17px] font-bold text-gray-900 dark:text-white tabular-nums leading-none">{aula.horario}</p>
+            <p className={`text-[11px] mt-1 font-medium ${full ? 'text-red-500 dark:text-red-400' : vagas <= 3 ? 'text-amber-500 dark:text-amber-400' : 'text-gray-400 dark:text-gray-500'}`}>
+              {full ? 'Lotada' : `${vagas} vaga${vagas !== 1 ? 's' : ''}`}
+            </p>
           </div>
+        </div>
+        {/* Row 2: occupancy bar */}
+        <div className="mt-3 flex items-center gap-2.5">
+          <div className="flex-1 h-1 rounded-full bg-gray-100 dark:bg-[#1F1F23] overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all ${pct >= 1 ? 'bg-red-400' : pct >= 0.8 ? 'bg-amber-400' : 'bg-emerald-400'}`}
+              style={{ width: `${Math.min(pct * 100, 100)}%` }}
+            />
+          </div>
+          <span className="text-[11px] tabular-nums text-gray-400 dark:text-gray-500 shrink-0">
+            {booking.inscritos.length}/{aula.vagasTotais}
+          </span>
+        </div>
+        {/* Row 3: fila + action */}
+        <div className="flex items-center justify-between mt-3">
+          <p className="text-[11px] text-gray-400 dark:text-gray-500">
+            {booking.filaEspera.length > 0 ? `${booking.filaEspera.length} na fila` : ''}
+          </p>
+          {inscrito ? (
+            <button onClick={onCancel} className="text-[12px] font-medium text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 px-3 py-1.5 rounded-lg transition-colors">
+              Cancelar
+            </button>
+          ) : naFila ? (
+            <span className="text-[12px] font-medium text-amber-600 dark:text-amber-400 pr-1">Você está na fila</span>
+          ) : full ? (
+            <button onClick={onFullClick} className="text-[12px] font-medium text-gray-500 hover:bg-gray-100 dark:hover:bg-[#1F1F23] px-3 py-1.5 rounded-lg transition-colors">
+              Ver fila
+            </button>
+          ) : (
+            <button onClick={onBook} className="text-[12px] font-semibold bg-[#5E6AD2] hover:bg-[#4B55B8] active:scale-95 text-white px-4 py-1.5 rounded-lg shadow-sm transition-all">
+              Agendar
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -148,8 +181,8 @@ export default function StudentClasses() {
   const weekDays = useMemo(() => getWeekDays(weekOffset), [weekOffset])
   const profNome = (id: string) => data.professores.find(p => p.id === id)?.nome ?? id
 
-  const horariosOpts = useMemo(() => ['Todos', ...[...new Set(data.aulas.map(a => a.horario))].sort()], [data.aulas])
-  const profsOpts = useMemo(() => [{ id: 'Todos', nome: 'Todos' }, ...data.professores], [data.professores])
+  const horariosOpts = useMemo(() => [...new Set(data.aulas.map(a => a.horario))].sort(), [data.aulas])
+  const profsOpts = useMemo(() => data.professores.filter(p => data.aulas.some(a => a.professorId === p.id)), [data.aulas, data.professores])
 
   const aulasFiltered = useMemo(() => {
     let list = filterMod === 'Todas' ? data.aulas : data.aulas.filter(a => a.modalidade === filterMod)
@@ -202,55 +235,49 @@ export default function StudentClasses() {
         </div>
       )}
 
-      <div className="pt-3 space-y-2.5">
-        {/* View switcher */}
-        <div className="flex items-center px-4 md:px-0 gap-1">
-          {([['dia', 'Por dia', CalendarCheck], ['semana', 'Semana', LayoutGrid], ['tipo', 'Por tipo', Tag]] as const).map(([v, label, Icon]) => (
-            <button key={v} onClick={() => setView(v)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors ${view === v ? PILL_ACTIVE : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#1F1F23]'}`}>
-              <Icon size={12} />{label}
-            </button>
-          ))}
-        </div>
-
-        {/* ── Filter bar ── */}
-        <div data-tour="student-filtros" className="space-y-2">
-          {/* Row 1: Modalidade */}
-          <div className="flex items-center gap-1.5 px-4 md:px-0 overflow-x-auto no-scrollbar">
-            <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider shrink-0 w-14">Modalidade</span>
-            {MODALIDADES.map(m => (
-              <button key={m} onClick={() => setFilterMod(m)}
-                className={`${PILL_BASE} ${filterMod === m ? PILL_ACTIVE : PILL_IDLE}`}>
-                {m !== 'Todas' && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: MOD_COLOR[m as ModalidadeType].dot }} />}
-                {m}
+      <div className="pt-2 space-y-2">
+        {/* View switcher + filter toolbar */}
+        <div className="flex items-center gap-2 px-4 md:px-0 flex-wrap">
+          {/* Segmented control */}
+          <div className="flex items-center bg-[#F4F4F5] dark:bg-[#1F1F23] rounded-lg p-0.5 gap-0.5 shrink-0">
+            {([['dia', CalendarCheck, 'Dia'], ['semana', LayoutGrid, 'Semana'], ['tipo', Tag, 'Tipo']] as const).map(([v, Icon, label]) => (
+              <button key={v} onClick={() => setView(v)}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[12px] font-medium transition-all ${view === v ? VIEW_SEG_ACTIVE : VIEW_SEG_IDLE}`}>
+                <Icon size={12} />{label}
               </button>
             ))}
           </div>
 
-          {/* Row 2: Horário */}
-          <div className="flex items-center gap-1.5 px-4 md:px-0 overflow-x-auto no-scrollbar">
-            <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider shrink-0 w-14">Horário</span>
-            {horariosOpts.map(h => (
-              <button key={h} onClick={() => setFilterHorario(h)}
-                className={`${PILL_BASE} ${filterHorario === h ? PILL_ACTIVE : PILL_IDLE}`}>
-                <Clock size={11} />{h}
-              </button>
-            ))}
-          </div>
-
-          {/* Row 3: Professor */}
-          <div className="flex items-center gap-1.5 px-4 md:px-0 overflow-x-auto no-scrollbar">
-            <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider shrink-0 w-14">Prof.</span>
-            {profsOpts.map(p => (
-              <button key={p.id} onClick={() => setFilterProf(p.id)}
-                className={`${PILL_BASE} ${filterProf === p.id ? PILL_ACTIVE : PILL_IDLE}`}>
-                <User size={11} />{p.nome}
-              </button>
-            ))}
+          {/* Dropdown filters */}
+          <div data-tour="student-filtros" className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            <FilterSelect
+              value={filterMod}
+              onChange={v => setFilterMod(v as 'Todas' | ModalidadeType)}
+              active={filterMod !== 'Todas'}
+              defaultValue="Todas"
+              defaultLabel="Modalidade"
+              options={(['Pilates', 'Muay Thai', 'Spinning'] as ModalidadeType[]).map(m => ({ value: m, label: m }))}
+            />
+            <FilterSelect
+              value={filterHorario}
+              onChange={setFilterHorario}
+              active={filterHorario !== 'Todos'}
+              defaultValue="Todos"
+              defaultLabel="Horário"
+              options={horariosOpts.map(h => ({ value: h, label: h }))}
+            />
+            <FilterSelect
+              value={filterProf}
+              onChange={setFilterProf}
+              active={filterProf !== 'Todos'}
+              defaultValue="Todos"
+              defaultLabel="Professor"
+              options={profsOpts.map(p => ({ value: p.id, label: p.nome.split(' ')[0] }))}
+            />
             {hasActiveFilters && (
               <button onClick={clearFilters}
-                className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-medium text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#1F1F23] transition-colors">
-                <X size={11} /> Limpar
+                className="shrink-0 text-[12px] font-medium text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 px-2 py-1.5 rounded-lg transition-colors flex items-center gap-1">
+                <X size={12} /> Limpar
               </button>
             )}
           </div>

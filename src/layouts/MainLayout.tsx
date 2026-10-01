@@ -79,16 +79,17 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               key={item.to}
               to={item.to}
               end={item.to === '/'}
-              className={({ isActive }) =>
-                `flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-[#F4F4F5] dark:bg-[#1F1F23] text-gray-900 dark:text-white'
-                    : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#1A1A1E] hover:text-gray-700 dark:hover:text-gray-200'
-                }`
-              }
             >
-              <item.icon size={16} />
-              <span>{item.label}</span>
+              {({ isActive }) => (
+                <span className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+                  isActive
+                    ? 'bg-[#EEF0FD] dark:bg-[#1F2545] text-[#3730A3] dark:text-[#818CF8]'
+                    : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#1A1A1E] hover:text-gray-700 dark:hover:text-gray-200'
+                }`}>
+                  <item.icon size={16} strokeWidth={isActive ? 2.2 : 1.8} />
+                  <span>{item.label}</span>
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>
