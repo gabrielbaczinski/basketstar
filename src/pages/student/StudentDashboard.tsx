@@ -1,8 +1,23 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Calendar, ChevronRight, User, X, Megaphone, CreditCard, MessageCircle, ArrowRight } from 'lucide-react'
+import {
+  CalendarDays, ChevronRight, X, Megaphone, CreditCard,
+  MessageCircle, ArrowRight, Clock, TrendingUp
+} from 'lucide-react'
 import { useApp } from '../../context/AppContext'
-import Badge, { modalidadeVariant, modalidadeAccent } from '../../components/ui/Badge'
+
+const MOD_COLOR: Record<string, { dot: string; bg: string; text: string }> = {
+  'Pilates':   { dot: '#7C3AED', bg: '#F5F3FF', text: '#6D28D9' },
+  'Muay Thai': { dot: '#DC2626', bg: '#FEF2F2', text: '#B91C1C' },
+  'Spinning':  { dot: '#D97706', bg: '#FFFBEB', text: '#B45309' },
+}
+
+const QUICK = [
+  { to: '/aulas',       icon: CalendarDays,   label: 'Aulas',       cls: 'bg-[#EEF0FD] dark:bg-[#1F2545] text-[#5E6AD2]' },
+  { to: '/carteirinha', icon: CreditCard,      label: 'Carteirinha', cls: 'bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400' },
+  { to: '/comunidade',  icon: Megaphone,       label: 'Feed',        cls: 'bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400' },
+  { to: '/chat',        icon: MessageCircle,   label: 'Chat',        cls: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
+]
 
 function greeting(): string {
   const h = new Date().getHours()
@@ -10,13 +25,6 @@ function greeting(): string {
   if (h < 18) return 'Boa tarde'
   return 'Boa noite'
 }
-
-const quickActions = [
-  { to: '/aulas', icon: Calendar, label: 'Aulas', color: '#5E6AD2' },
-  { to: '/carteirinha', icon: CreditCard, label: 'Carteirinha', color: '#0284C7' },
-  { to: '/comunidade', icon: Megaphone, label: 'Feed', color: '#7C3AED' },
-  { to: '/chat', icon: MessageCircle, label: 'Chat', color: '#059669' },
-]
 
 const DIAS_SEMANA = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
 
@@ -29,148 +37,121 @@ export default function StudentDashboard() {
     data.aulas.forEach(aula => {
       aula.diasSemana.forEach(dia => {
         const booking = aula.bookingsPorDia[dia]
-        if (booking?.inscritos.includes(currentUser.id)) {
-          result.push({ aula, dia })
-        }
+        if (booking?.inscritos.includes(currentUser.id)) result.push({ aula, dia })
       })
     })
     return result.sort((a, b) => DIAS_SEMANA.indexOf(a.dia) - DIAS_SEMANA.indexOf(b.dia))
   }, [data.aulas, currentUser])
 
-  const professorNome = (id: string) => data.professores.find(p => p.id === id)?.nome ?? '—'
-  const avisosRecentes = data.comunidadeAvisos.slice(0, 2)
+  const profNome = (id: string) => data.professores.find(p => p.id === id)?.nome?.split(' ')[0] ?? '—'
+  const avisos = data.comunidadeAvisos.slice(0, 3)
   const first = currentUser?.nome.split(' ')[0] ?? ''
+  const isAtivo = currentUser?.statusPlano === 'Ativo'
+  const proxima = minhasAulas[0]
 
   return (
-    <div className="space-y-0">
+    <div className="px-4 md:px-0 pt-4 md:pt-0 pb-6 space-y-5">
 
-      {/* ── Hero section ── */}
-      <section className="md:hidden px-4 pt-4 pb-6 bg-white dark:bg-[#1C1C1E]">
-        <div className="flex items-start justify-between mb-5">
-          <div>
-            <p className="text-[13px] text-gray-400 dark:text-gray-500 font-medium">{greeting()}</p>
-            <h1 className="text-[22px] font-bold tracking-tight text-gray-900 dark:text-white leading-tight mt-0.5">
-              {first}
-            </h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge variant={currentUser?.statusPlano === 'Ativo' ? 'success' : 'danger'} className="text-[11px]">
-              {currentUser?.statusPlano}
-            </Badge>
-          </div>
+      {/* ── Greeting ── */}
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-[12px] font-medium text-gray-400 dark:text-gray-500">{greeting()}</p>
+          <h1 className="text-[22px] font-bold tracking-tight text-gray-900 dark:text-white leading-tight mt-0.5">{first}</h1>
         </div>
+        <span className={`mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+          isAtivo
+            ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+            : 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400'
+        }`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${isAtivo ? 'bg-emerald-500' : 'bg-red-500'}`} />
+          {currentUser?.statusPlano}
+        </span>
+      </div>
 
-        {/* Quick stats row */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-[#F2F2F7] dark:bg-[#2C2C2E] rounded-xl p-4">
-            <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Aulas</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white leading-none">{minhasAulas.length}</p>
-            <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">agendadas</p>
+      {/* ── Stats ── */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-white dark:bg-[#111111] rounded-xl shadow-sm p-4">
+          <div className="flex items-center gap-1.5 mb-1">
+            <TrendingUp size={11} className="text-[#5E6AD2]" />
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Agendadas</p>
           </div>
-          <div className="bg-[#F2F2F7] dark:bg-[#2C2C2E] rounded-xl p-4">
-            <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Próxima</p>
-            {minhasAulas.length > 0 ? (
-              <>
-                <p className="text-xl font-bold text-gray-900 dark:text-white leading-tight mt-1">{minhasAulas[0].aula.horario}</p>
-                <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1 truncate">{minhasAulas[0].aula.modalidade}</p>
-              </>
-            ) : (
-              <p className="text-[13px] text-gray-400 dark:text-gray-500 mt-2">Nenhuma</p>
-            )}
-          </div>
+          <p className="text-3xl font-bold text-gray-900 dark:text-white tabular-nums leading-none mt-1">{minhasAulas.length}</p>
+          <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">aula{minhasAulas.length !== 1 ? 's' : ''} na semana</p>
         </div>
-      </section>
-
-      {/* Desktop greeting */}
-      <div className="hidden md:block mb-6">
-        <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">
-          {greeting()}, {first}
-        </h1>
-        <div className="flex items-center gap-2 mt-1.5">
-          <Badge variant={currentUser?.statusPlano === 'Ativo' ? 'success' : 'danger'}>
-            Plano {currentUser?.statusPlano}
-          </Badge>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            {minhasAulas.length} {minhasAulas.length === 1 ? 'aula agendada' : 'aulas agendadas'}
-          </span>
+        <div className="bg-white dark:bg-[#111111] rounded-xl shadow-sm p-4">
+          <div className="flex items-center gap-1.5 mb-1">
+            <Clock size={11} className="text-[#5E6AD2]" />
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Próxima</p>
+          </div>
+          {proxima ? (
+            <>
+              <p className="text-[18px] font-bold text-gray-900 dark:text-white tabular-nums leading-tight mt-1">{proxima.aula.horario}</p>
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 truncate">{proxima.aula.modalidade} · {proxima.dia.slice(0, 3)}</p>
+            </>
+          ) : (
+            <p className="text-[13px] text-gray-400 dark:text-gray-500 mt-1.5">Nenhuma</p>
+          )}
         </div>
       </div>
 
-      {/* ── Quick actions (horizontal scroll on mobile) ── */}
-      <section className="md:mb-8">
-        <div className="flex gap-3 overflow-x-auto px-4 md:px-0 py-4 md:py-0 no-scrollbar">
-          {quickActions.map(({ to, icon: Icon, label, color }) => (
-            <Link
-              key={to}
-              to={to}
-              className="flex flex-col items-center gap-2 shrink-0"
-            >
-              <div
-                className="w-[60px] h-[60px] rounded-xl bg-white dark:bg-[#1C1C1E] flex items-center justify-center shadow-sm active:scale-95 transition-transform"
-              >
-                <Icon size={26} style={{ color }} strokeWidth={1.8} />
-              </div>
-              <span className="text-[11px] font-medium text-gray-600 dark:text-gray-400">{label}</span>
-            </Link>
-          ))}
-        </div>
-      </section>
+      {/* ── Quick actions ── */}
+      <div className="grid grid-cols-4 gap-2">
+        {QUICK.map(({ to, icon: Icon, label, cls }) => (
+          <Link key={to} to={to}
+            className="flex flex-col items-center gap-2 bg-white dark:bg-[#111111] rounded-xl shadow-sm py-4 hover:shadow-md active:scale-95 transition-all">
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${cls}`}>
+              <Icon size={20} strokeWidth={1.8} />
+            </div>
+            <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 text-center leading-tight">{label}</span>
+          </Link>
+        ))}
+      </div>
 
       {/* ── Suas aulas ── */}
-      <section className="px-4 md:px-0 pb-4 md:mb-8">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-[15px] md:text-sm font-semibold text-gray-900 dark:text-white">Suas aulas</h2>
-          <Link to="/aulas" className="text-[13px] md:text-xs font-medium text-[#5E6AD2] inline-flex items-center gap-0.5">
-            Ver todas <ChevronRight size={13} />
+      <section>
+        <div className="flex items-center justify-between mb-2.5">
+          <h2 className="text-[14px] font-semibold text-gray-900 dark:text-white">Suas aulas</h2>
+          <Link to="/aulas" className="text-[12px] font-medium text-[#5E6AD2] inline-flex items-center gap-0.5">
+            Ver todas <ChevronRight size={12} />
           </Link>
         </div>
 
         {minhasAulas.length === 0 ? (
-          <div className="bg-white dark:bg-[#1C1C1E] rounded-xl shadow-sm py-10 flex flex-col items-center gap-2 text-center">
-            <div className="w-14 h-14 rounded-xl bg-[#F2F2F7] dark:bg-[#2C2C2E] flex items-center justify-center mb-1">
-              <Calendar size={24} className="text-gray-400" />
+          <div className="bg-white dark:bg-[#111111] rounded-xl shadow-sm py-10 flex flex-col items-center gap-2 text-center px-6">
+            <div className="w-12 h-12 rounded-xl bg-[#EEF0FD] dark:bg-[#1F2545] flex items-center justify-center mb-1">
+              <CalendarDays size={22} className="text-[#5E6AD2]" />
             </div>
-            <p className="text-[15px] font-semibold text-gray-900 dark:text-white">Nenhuma aula agendada</p>
-            <p className="text-[13px] text-gray-400 dark:text-gray-500 max-w-[220px] leading-relaxed">
-              Explore as modalidades disponíveis e agende sua primeira aula.
+            <p className="text-[14px] font-semibold text-gray-900 dark:text-white">Nenhuma aula agendada</p>
+            <p className="text-[12px] text-gray-400 dark:text-gray-500 max-w-[200px] leading-relaxed">
+              Explore as modalidades disponíveis e escolha seus horários.
             </p>
-            <Link
-              to="/aulas"
-              className="mt-3 inline-flex items-center gap-1.5 bg-[#5E6AD2] text-white text-[13px] font-semibold px-5 py-2.5 rounded-lg transition-colors active:scale-95"
-            >
-              Explorar aulas <ArrowRight size={14} />
+            <Link to="/aulas"
+              className="mt-3 inline-flex items-center gap-1.5 bg-[#5E6AD2] hover:bg-[#4B55B8] text-white text-[12px] font-semibold px-4 py-2 rounded-lg transition-colors active:scale-95">
+              Explorar aulas <ArrowRight size={13} />
             </Link>
           </div>
         ) : (
-          <div className="bg-white dark:bg-[#1C1C1E] rounded-xl shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-[#111111] rounded-xl shadow-sm overflow-hidden">
             {minhasAulas.map((item, idx) => {
               const { aula, dia } = item
+              const c = MOD_COLOR[aula.modalidade] ?? { dot: '#5E6AD2', bg: '#EEF0FD', text: '#3730A3' }
               return (
-                <div
-                  key={`${aula.id}-${dia}`}
-                  className={`flex items-center gap-3 px-4 py-4 active:bg-gray-50 dark:active:bg-[#2C2C2E] transition-colors ${idx % 2 === 1 ? 'bg-[#F9F9F9] dark:bg-[#242424]' : ''}`}
-                >
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: `${modalidadeAccent(aula.modalidade)}20` }}
-                  >
-                    <Calendar size={18} style={{ color: modalidadeAccent(aula.modalidade) }} />
-                  </div>
+                <div key={`${aula.id}-${dia}`}
+                  className={`flex items-center gap-3.5 px-4 py-3.5 ${idx > 0 ? 'shadow-[0_-1px_0_0_#F1F5F9] dark:shadow-[0_-1px_0_0_#1A1A1E]' : ''}`}>
+                  <div className="w-2 self-stretch rounded-full shrink-0" style={{ backgroundColor: c.dot }} />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[14px] font-semibold text-gray-900 dark:text-white">{aula.modalidade}</span>
-                      <Badge variant={modalidadeVariant(aula.modalidade)} className="text-[10px]">{aula.horario}</Badge>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[13px] font-semibold text-gray-900 dark:text-white">{aula.modalidade}</span>
+                      <span className="text-[10px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full" style={{ backgroundColor: c.bg, color: c.text }}>{aula.horario}</span>
                     </div>
-                    <p className="text-[12px] text-gray-400 dark:text-gray-500 mt-0.5 inline-flex items-center gap-1 truncate">
-                      <User size={10} /> {professorNome(aula.professorId)} · {dia}
+                    <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 flex items-center gap-1 truncate">
+                      <Clock size={9} /> {profNome(aula.professorId)} · {dia}
                     </p>
                   </div>
-                  <button
-                    onClick={() => cancelClassDia(aula.id, dia)}
-                    className="w-8 h-8 rounded-md text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center justify-center transition-colors"
-                    aria-label="Cancelar aula"
-                  >
-                    <X size={15} />
+                  <button onClick={() => cancelClassDia(aula.id, dia)}
+                    className="w-7 h-7 rounded-lg text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center justify-center transition-colors shrink-0"
+                    aria-label="Cancelar aula">
+                    <X size={14} />
                   </button>
                 </div>
               )
@@ -179,27 +160,29 @@ export default function StudentDashboard() {
         )}
       </section>
 
-      {/* ── Últimos avisos ── */}
-      {avisosRecentes.length > 0 && (
-        <section className="px-4 md:px-0 pb-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-[15px] md:text-sm font-semibold text-gray-900 dark:text-white">Avisos</h2>
-            <Link to="/comunidade" className="text-[13px] md:text-xs font-medium text-[#5E6AD2] inline-flex items-center gap-0.5">
-              Ver todos <ChevronRight size={13} />
+      {/* ── Avisos ── */}
+      {avisos.length > 0 && (
+        <section>
+          <div className="flex items-center justify-between mb-2.5">
+            <h2 className="text-[14px] font-semibold text-gray-900 dark:text-white">Avisos</h2>
+            <Link to="/comunidade" className="text-[12px] font-medium text-[#5E6AD2] inline-flex items-center gap-0.5">
+              Ver todos <ChevronRight size={12} />
             </Link>
           </div>
-          <div className="space-y-3 md:grid md:gap-3 md:grid-cols-2 md:space-y-0">
-            {avisosRecentes.map(av => (
-              <div key={av.id} className="bg-white dark:bg-[#1C1C1E] rounded-xl shadow-sm p-4 flex items-start gap-3">
-                <div className="w-9 h-9 rounded-lg bg-[#F4F4F5] dark:bg-[#1F1F23] text-[#5E6AD2] flex items-center justify-center shrink-0">
-                  <Megaphone size={15} />
+          <div className="space-y-2">
+            {avisos.map(av => (
+              <div key={av.id} className="bg-white dark:bg-[#111111] rounded-xl shadow-sm p-4 flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-[#EEF0FD] dark:bg-[#1F2545] flex items-center justify-center shrink-0 mt-0.5">
+                  <Megaphone size={15} className="text-[#5E6AD2]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-[14px] font-semibold text-gray-900 dark:text-white leading-snug">{av.titulo}</h3>
-                  <p className="text-[12px] text-gray-400 dark:text-gray-500 mt-1 leading-relaxed line-clamp-2">{av.corpo}</p>
-                  <p className="text-[11px] text-gray-300 dark:text-gray-600 mt-2">
-                    {new Date(av.timestamp).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-                  </p>
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-[13px] font-semibold text-gray-900 dark:text-white leading-snug">{av.titulo}</h3>
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap shrink-0 mt-0.5">
+                      {new Date(av.timestamp).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                    </span>
+                  </div>
+                  <p className="text-[12px] text-gray-500 dark:text-gray-400 mt-1 leading-relaxed line-clamp-2">{av.corpo}</p>
                 </div>
               </div>
             ))}
