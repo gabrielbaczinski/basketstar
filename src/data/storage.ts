@@ -7,6 +7,11 @@ const SESSION_KEY = 'gym_current_user'
 /** Validate loaded data has the expected shape; coerce numbers; drop corrupted aulas */
 function sanitize(data: AppData): AppData {
   if (!data || !Array.isArray(data.aulas) || !Array.isArray(data.usuarios)) return initialData
+  // Invalidate legacy snapshots that still carry "Profa."/"Prof." in professor names
+  // or the old 3-modality mock (only 6 aulas). Fresh demo data takes over.
+  const hasLegacyProf = Array.isArray(data.professores)
+    && data.professores.some(p => /^Prof(a)?\./i.test(p?.nome ?? ''))
+  if (hasLegacyProf) return initialData
 
   const aulas: Aula[] = data.aulas
     .filter(a => a && typeof a.id === 'string' && Array.isArray(a.diasSemana))

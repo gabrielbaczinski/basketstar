@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   Dumbbell, Sun, Moon, ArrowRight, Sparkles, CalendarCheck,
-  MessageSquare, BarChart3, AlertCircle, Shield,
+  MessageSquare, BarChart3, AlertCircle, Shield, ChevronDown,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import Avatar from '../components/ui/Avatar'
@@ -153,9 +153,41 @@ export default function LoginPage() {
             Selecione seu perfil para continuar.
           </p>
 
+          {/* User selector — dropdown */}
+          <div className="mb-3">
+            <label htmlFor="user-select" className="block text-caption2 font-semibold uppercase tracking-wider text-ios-label-2 dark:text-ios-dlabel-2 mb-2 px-1">
+              Perfil de acesso
+            </label>
+            <div className="relative">
+              <select
+                id="user-select"
+                value={selected}
+                onChange={e => { setSelected(e.target.value); setLoginError(null) }}
+                className="ios-input appearance-none pr-10 !py-3"
+              >
+                <optgroup label="Alunos">
+                  {alunos.map(u => (
+                    <option key={u.id} value={u.id}>
+                      {u.nome}{u.statusPlano === 'Inativo' ? ' — inativo' : ''}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="Administradores">
+                  {admins.map(u => (
+                    <option key={u.id} value={u.id}>{u.nome}</option>
+                  ))}
+                </optgroup>
+              </select>
+              <ChevronDown
+                size={16}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-ios-label-3 dark:text-ios-dlabel-3 pointer-events-none"
+              />
+            </div>
+          </div>
+
           {/* Selected user preview card */}
           {selectedUser && (
-            <div className="ios-card p-3 mb-3 flex items-center gap-3 animate-fade-up">
+            <div className="ios-card p-3 mb-4 flex items-center gap-3 animate-fade-up">
               <Avatar name={selectedUser.nome} size="md" />
               <div className="flex-1 min-w-0">
                 <p className="text-footnote font-semibold text-ios-label dark:text-ios-dlabel truncate">
@@ -179,32 +211,6 @@ export default function LoginPage() {
               </span>
             </div>
           )}
-
-          {/* User selector list (grouped list) */}
-          <div className="ios-card-flat overflow-hidden mb-4">
-            <GroupLabel>Alunos</GroupLabel>
-            {alunos.map(u => (
-              <UserRow
-                key={u.id}
-                nome={u.nome}
-                detail={u.statusPlano === 'Inativo' ? 'Matrícula inativa' : u.email}
-                inactive={u.statusPlano === 'Inativo'}
-                selected={selected === u.id}
-                onSelect={() => setSelected(u.id)}
-              />
-            ))}
-            <GroupLabel>Administradores</GroupLabel>
-            {admins.map(u => (
-              <UserRow
-                key={u.id}
-                nome={u.nome}
-                detail="Acesso completo"
-                admin
-                selected={selected === u.id}
-                onSelect={() => setSelected(u.id)}
-              />
-            ))}
-          </div>
 
           {loginError && (
             <div className="flex items-start gap-2 px-3.5 py-2.5 bg-sys-red/12 text-sys-red rounded-ios text-caption1 mb-3 animate-fade-up">
@@ -232,58 +238,3 @@ export default function LoginPage() {
   )
 }
 
-function GroupLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="px-3.5 py-1.5 bg-ios-fill-3 dark:bg-white/[0.03] text-caption2 font-semibold uppercase tracking-wider text-ios-label-3 dark:text-ios-dlabel-3">
-      {children}
-    </div>
-  )
-}
-
-function UserRow({
-  nome, detail, selected, admin, inactive, onSelect,
-}: {
-  nome: string; detail: string; selected: boolean
-  admin?: boolean; inactive?: boolean; onSelect: () => void
-}) {
-  return (
-    <button
-      onClick={onSelect}
-      className={`ios-list-row w-full flex items-center gap-3 px-3.5 py-2.5 text-left transition-colors ${
-        selected
-          ? 'bg-tint-500/10 dark:bg-tint-500/14'
-          : 'hover:bg-ios-fill-3 dark:hover:bg-white/5'
-      }`}
-    >
-      <Avatar name={nome} size="sm" />
-      <div className="flex-1 min-w-0">
-        <p className={`text-footnote font-semibold truncate ${
-          selected
-            ? 'text-tint-700 dark:text-tint-300'
-            : inactive
-              ? 'text-ios-label-2 dark:text-ios-dlabel-2'
-              : 'text-ios-label dark:text-ios-dlabel'
-        }`}>
-          {nome}
-        </p>
-        <p className={`text-caption2 truncate mt-0.5 ${
-          inactive ? 'text-sys-red' : 'text-ios-label-3 dark:text-ios-dlabel-3'
-        }`}>
-          {detail}
-        </p>
-      </div>
-      {admin && (
-        <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-tint-500/14 text-tint-600 dark:text-tint-300 shrink-0">
-          Admin
-        </span>
-      )}
-      {selected && (
-        <span className="w-5 h-5 rounded-full bg-tint-500 flex items-center justify-center shrink-0">
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <path d="M2 5 L4 7 L8 3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </span>
-      )}
-    </button>
-  )
-}

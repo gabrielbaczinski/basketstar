@@ -2,7 +2,7 @@ import { useMemo, useRef, useState, useEffect } from 'react'
 import {
   ChevronLeft, ChevronRight, ChevronDown, Info, Clock, User, CalendarCheck,
   LayoutGrid, Tag, SlidersHorizontal, X, Check, Users as UsersIcon, Flame,
-  Hourglass, ArrowUpDown, Calendar as CalendarIcon,
+  Hourglass, Calendar as CalendarIcon,
 } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import type { Aula, ModalidadeType } from '../../types'
@@ -15,7 +15,6 @@ const DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domi
 const DIAS_ABREV = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
 const MESES_LONG = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro']
 type ViewMode = 'dia' | 'semana' | 'tipo'
-type SortBy = 'horario' | 'vagas-desc' | 'modalidade' | 'professor'
 
 function getWeekStart(offset: number): Date {
   const today = new Date()
@@ -56,31 +55,6 @@ function getDefaultDay(): string {
 
 function sortByHorario(aulas: Aula[]) {
   return [...aulas].sort((a, b) => a.horario.localeCompare(b.horario))
-}
-
-function sortAulas(aulas: Aula[], dia: string, sortBy: SortBy, profLookup: (id: string) => string): Aula[] {
-  const list = [...aulas]
-  switch (sortBy) {
-    case 'horario':
-      return list.sort((a, b) => a.horario.localeCompare(b.horario))
-    case 'vagas-desc':
-      return list.sort((a, b) => {
-        const va = getVagasDisponiveisDia(a, dia)
-        const vb = getVagasDisponiveisDia(b, dia)
-        if (vb !== va) return vb - va
-        return a.horario.localeCompare(b.horario)
-      })
-    case 'modalidade':
-      return list.sort((a, b) => {
-        const c = a.modalidade.localeCompare(b.modalidade, 'pt-BR')
-        return c !== 0 ? c : a.horario.localeCompare(b.horario)
-      })
-    case 'professor':
-      return list.sort((a, b) => {
-        const c = profLookup(a.professorId).localeCompare(profLookup(b.professorId), 'pt-BR')
-        return c !== 0 ? c : a.horario.localeCompare(b.horario)
-      })
-  }
 }
 
 /* ───────────────────────────── Pill dropdown ───────────────────────────── */
@@ -398,7 +372,8 @@ export default function StudentClasses() {
   const [selectedDay, setSelectedDay] = useState(getDefaultDay)
   const [weekOffset, setWeekOffset] = useState(0)
   const [filterMod, setFilterMod] = useState<'Todas' | ModalidadeType>('Todas')
-  const [sortBy, setSortBy] = useState<SortBy>('horario')
+  const [filterHorario, setFilterHorario] = useState<string>('Todos')
+  const [filterProf, setFilterProf] = useState<string>('Todos')
   const [fullModal, setFullModal] = useState<{ aula: Aula; dia: string } | null>(null)
   const [confirmModal, setConfirmModal] = useState<{ aula: Aula; dia: string; kind: 'book' | 'cancel' | 'waitlist' } | null>(null)
   const [dayPickerOpen, setDayPickerOpen] = useState(false)
@@ -409,13 +384,21 @@ export default function StudentClasses() {
   const profNome = (id: string) => data.professores.find(p => p.id === id)?.nome ?? id
 
   const modalidadesOpts = useMemo(() => [...new Set(data.aulas.map(a => a.modalidade))].filter(Boolean).sort(), [data.aulas])
+  const horariosOpts = useMemo(() => [...new Set(data.aulas.map(a => a.horario))].sort(), [data.aulas])
+  const profsOpts = useMemo(
+    () => data.professores.filter(p => data.aulas.some(a => a.professorId === p.id)),
+    [data.aulas, data.professores],
+  )
 
   const aulasFiltered = useMemo(() => {
-    return filterMod === 'Todas' ? data.aulas : data.aulas.filter(a => a.modalidade === filterMod)
-  }, [data.aulas, filterMod])
+    let list = filterMod === 'Todas' ? data.aulas : data.aulas.filter(a => a.modalidade === filterMod)
+    if (filterHorario !== 'Todos') list = list.filter(a => a.horario === filterHorario)
+    if (filterProf !== 'Todos') list = list.filter(a => a.professorId === filterProf)
+    return list
+  }, [data.aulas, filterMod, filterHorario, filterProf])
 
-  const hasActiveFilters = filterMod !== 'Todas' || sortBy !== 'horario'
-  const clearFilters = () => { setFilterMod('Todas'); setSortBy('horario') }
+  const hasActiveFilters = filterMod !== 'Todas' || filterHorario !== 'Todos' || filterProf !== 'Todos'
+  const clearFilters = () => { setFilterMod('Todas'); setFilterHorario('Todos'); setFilterProf('Todos') }
 
   const selectedWeekDay = useMemo(() => weekDays.find(d => d.name === selectedDay), [weekDays, selectedDay])
   const selectedDayLabel = selectedWeekDay
@@ -470,9 +453,8 @@ export default function StudentClasses() {
   }
 
   const aulasNoDia = useMemo(
-    () => sortAulas(aulasFiltered.filter(a => a.diasSemana.includes(selectedDay)), selectedDay, sortBy, profNome),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [aulasFiltered, selectedDay, sortBy, data.professores],
+    () => sortByHorario(aulasFiltered.filter(a => a.diasSemana.includes(selectedDay))),
+    [aulasFiltered, selectedDay],
   )
 
   // Group aulas by period of day for the "Dia" view
@@ -486,14 +468,12 @@ export default function StudentClasses() {
       else if (hour < 18) tarde.push(a)
       else noite.push(a)
     })
-    const sortGroup = (list: Aula[]) => sortAulas(list, selectedDay, sortBy, profNome)
     return [
-      { label: 'Manhã', icon: '☀', aulas: sortGroup(manha) },
-      { label: 'Tarde', icon: '◐', aulas: sortGroup(tarde) },
-      { label: 'Noite', icon: '☾', aulas: sortGroup(noite) },
+      { label: 'Manhã', icon: '☀', aulas: manha },
+      { label: 'Tarde', icon: '◐', aulas: tarde },
+      { label: 'Noite', icon: '☾', aulas: noite },
     ].filter(g => g.aulas.length > 0)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aulasNoDia, selectedDay, sortBy, data.professores])
+  }, [aulasNoDia])
 
   // State for the Semana view: tap a mini card -> open details modal
   const [weekDetails, setWeekDetails] = useState<{ aula: Aula; dia: string } | null>(null)
@@ -568,16 +548,25 @@ export default function StudentClasses() {
               ]}
             />
             <PillSelect
-              icon={<ArrowUpDown size={11} strokeWidth={2.4} />}
-              label="Ordenar"
-              value={sortBy}
-              onChange={v => setSortBy(v as SortBy)}
-              active={sortBy !== 'horario'}
+              icon={<Clock size={11} strokeWidth={2.4} />}
+              label="Horário"
+              value={filterHorario}
+              onChange={setFilterHorario}
+              active={filterHorario !== 'Todos'}
               options={[
-                { value: 'horario', label: 'Horário (crescente)' },
-                { value: 'vagas-desc', label: 'Mais vagas' },
-                { value: 'modalidade', label: 'Modalidade (A–Z)' },
-                { value: 'professor', label: 'Professor (A–Z)' },
+                { value: 'Todos', label: 'Qualquer horário' },
+                ...horariosOpts.map(h => ({ value: h, label: h })),
+              ]}
+            />
+            <PillSelect
+              icon={<User size={11} strokeWidth={2.4} />}
+              label="Professor"
+              value={filterProf}
+              onChange={setFilterProf}
+              active={filterProf !== 'Todos'}
+              options={[
+                { value: 'Todos', label: 'Qualquer professor' },
+                ...profsOpts.map(p => ({ value: p.id, label: p.nome })),
               ]}
             />
             {hasActiveFilters && (
@@ -605,6 +594,17 @@ export default function StudentClasses() {
             options={[
               { value: 'Todas', label: 'Todas as modalidades' },
               ...modalidadesOpts.map(m => ({ value: m, label: m })),
+            ]}
+          />
+          <PillSelect
+            icon={<User size={11} strokeWidth={2.4} />}
+            label="Professor"
+            value={filterProf}
+            onChange={setFilterProf}
+            active={filterProf !== 'Todos'}
+            options={[
+              { value: 'Todos', label: 'Qualquer professor' },
+              ...profsOpts.map(p => ({ value: p.id, label: p.nome })),
             ]}
           />
           {hasActiveFilters && (
@@ -738,11 +738,8 @@ export default function StudentClasses() {
         <div className="overflow-x-auto no-scrollbar -mx-4 px-4">
           <div className="grid gap-2.5" style={{ gridTemplateColumns: 'repeat(7, minmax(160px, 1fr))' }}>
             {weekDays.map(d => {
-              const aulasDoDia = sortAulas(
+              const aulasDoDia = sortByHorario(
                 aulasFiltered.filter(a => a.diasSemana.includes(d.name)),
-                d.name,
-                sortBy,
-                profNome,
               )
               return (
                 <section
