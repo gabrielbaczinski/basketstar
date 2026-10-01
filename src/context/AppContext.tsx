@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react'
 import type { AppData, Usuario, Aula, Aviso, Mensagem, Configuracoes, AttendanceStatus } from '../types'
-import { loadData, saveData, getCurrentUserId, setCurrentUser, clearCurrentUser } from '../data/storage'
+import { loadData, saveData, getCurrentUserId, setCurrentUser, clearCurrentUser, resetAppData } from '../data/storage'
 import { getBookingDia } from '../utils/aulaUtils'
 
 type BookResult = 'booked' | 'waitlisted' | 'full' | 'already_booked'
@@ -29,6 +29,7 @@ interface AppContextType {
   updateAula: (aula: Aula) => void
   addAula: (aula: Omit<Aula, 'id'>) => void
   deleteAula: (aulaId: string) => void
+  resetDemo: () => void
 }
 
 const AppContext = createContext<AppContextType | null>(null)
@@ -38,23 +39,7 @@ function todayKey(): string {
 }
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [data, setData] = useState<AppData>(() => {
-    const loaded = loadData()
-    if (!loaded.attendance) loaded.attendance = {}
-    // Migration: if any aula still has old-style inscritos, convert it
-    loaded.aulas = loaded.aulas.map((a: Aula & { inscritos?: string[]; vagasOcupadas?: number; filaEspera?: string[] }) => {
-      if (!a.bookingsPorDia) {
-        const bookingsPorDia: Record<string, { inscritos: string[]; filaEspera: string[] }> = {}
-        ;(a.diasSemana ?? []).forEach((dia: string) => {
-          bookingsPorDia[dia] = { inscritos: a.inscritos ?? [], filaEspera: a.filaEspera ?? [] }
-        })
-        const { inscritos: _i, vagasOcupadas: _v, filaEspera: _f, ...rest } = a as typeof a
-        return { ...rest, bookingsPorDia }
-      }
-      return a
-    })
-    return loaded
-  })
+  const [data, setData] = useState<AppData>(() => loadData())
 
   const [isDark, setIsDark] = useState(() => localStorage.getItem('darkMode') === 'true')
   const [isOffline, setIsOffline] = useState(!navigator.onLine)
@@ -92,8 +77,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const setActiveView = useCallback((view: 'aluno' | 'admin') => setActiveViewState(view), [])
 
   const bookClassDia = useCallback((aulaId: string, dia: string): BookResult => {
-    if (!currentUserId) return 'full'
-    let result: BookResult = 'full'
+    if (!currentUserId) return 'already_booked'
+    let result: BookResult | null = null
     updateData(d => {
       const aulas = d.aulas.map(a => {
         if (a.id !== aulaId) return a
@@ -101,7 +86,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const booking = getBookingDia(a, dia)
         if (booking.inscritos.includes(currentUserId)) { result = 'already_booked'; return a }
         if (booking.filaEspera.includes(currentUserId)) { result = 'waitlisted'; return a }
-        if (booking.inscritos.length < a.vagasTotais) {
+        const cap = Math.max(0, Math.floor(Number(a.vagasTotais) || 0))
+        if (booking.inscritos.length < cap) {
           result = 'booked'
           return {
             ...a,
@@ -116,7 +102,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       })
       return { ...d, aulas }
     })
-    return result
+    // If result is still null, aula/dia couldn't be matched — treat as a transient error, not "full".
+    return result ?? 'already_booked'
   }, [currentUserId, updateData])
 
   const cancelClassDia = useCallback((aulaId: string, dia: string): boolean => {
@@ -213,6 +200,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     updateData(d => ({ ...d, aulas: d.aulas.filter(a => a.id !== aulaId) }))
   }, [updateData])
 
+  const resetDemo = useCallback(() => {
+    const fresh = resetAppData()
+    setData(fresh)
+  }, [])
+
   return (
     <AppContext.Provider value={{
       data, currentUser, isDark, isOffline, activeView,
@@ -220,6 +212,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       bookClassDia, cancelClassDia, joinWaitlistDia,
       updateConfiguracoes, addAviso, deleteAviso, sendMensagem,
       markAttendance, getAttendance, addUsuario, updateAula, addAula, deleteAula,
+      resetDemo,
     }}>
       {children}
     </AppContext.Provider>

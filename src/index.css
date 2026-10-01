@@ -8,22 +8,207 @@ html, body, #root {
   padding: 0;
 }
 
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  background-color: #EDEDF2;
+}
+html.dark { background-color: #000000; }
+
 /* iOS momentum scroll */
-main { -webkit-overflow-scrolling: touch; }
+main { -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; }
+
+/* ─── Ambient aurora background (subtle, animated) ──────────────────────── */
+/* Lives behind the whole app; conic + radial blobs drift slowly.           */
+.aurora-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background:
+    radial-gradient(60% 50% at 10% 0%,  rgba(94,106,210,0.18) 0%, transparent 60%),
+    radial-gradient(55% 45% at 100% 30%, rgba(175,82,222,0.14) 0%, transparent 65%),
+    radial-gradient(70% 60% at 80% 100%, rgba(0,122,255,0.12)  0%, transparent 60%),
+    radial-gradient(50% 40% at 0% 100%,  rgba(52,199,89,0.08)  0%, transparent 60%);
+  animation: auroraDrift 32s ease-in-out infinite alternate;
+}
+.dark .aurora-bg {
+  background:
+    radial-gradient(60% 50% at 10% 0%,  rgba(94,106,210,0.26) 0%, transparent 60%),
+    radial-gradient(55% 45% at 100% 30%, rgba(175,82,222,0.22) 0%, transparent 65%),
+    radial-gradient(70% 60% at 80% 100%, rgba(0,122,255,0.18)  0%, transparent 60%),
+    radial-gradient(50% 40% at 0% 100%,  rgba(52,199,89,0.12)  0%, transparent 60%);
+}
+.aurora-bg::after {
+  content: '';
+  position: absolute; inset: -20%;
+  background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.04) 0%, transparent 40%);
+  mix-blend-mode: overlay;
+  animation: auroraFloat 24s ease-in-out infinite alternate;
+}
+@keyframes auroraDrift {
+  0%   { transform: translate3d(0, 0, 0) scale(1); filter: hue-rotate(0deg); }
+  50%  { transform: translate3d(-2%, 1%, 0) scale(1.04); filter: hue-rotate(8deg); }
+  100% { transform: translate3d(1.5%, -1.5%, 0) scale(1.02); filter: hue-rotate(-6deg); }
+}
+@keyframes auroraFloat {
+  0%   { transform: translate3d(0,0,0) rotate(0deg); }
+  100% { transform: translate3d(4%, -3%, 0) rotate(6deg); }
+}
 
 /* Tap highlight */
 * { -webkit-tap-highlight-color: transparent; }
 
 @layer base {
   body {
-    @apply font-sans antialiased text-gray-900 dark:text-gray-100;
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    @apply font-sans antialiased text-ios-label dark:text-ios-dlabel;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'ss01', 'ss02';
+    font-variant-numeric: tabular-nums;
   }
-  h1 {
-    @apply text-xl font-semibold tracking-tight;
+  h1 { @apply text-title2 tracking-tight; }
+  h2 { @apply text-headline; }
+  button { font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11'; }
+  input, textarea, select { font-family: inherit; }
+}
+
+@layer components {
+  /* iOS-style grouped card surface */
+  .ios-card {
+    @apply bg-white dark:bg-ios-dbg-elev rounded-ios-md shadow-ios-2;
   }
-  h2 {
-    @apply text-base font-semibold;
+  .ios-card-flat {
+    @apply bg-white dark:bg-ios-dbg-elev rounded-ios-md;
+    box-shadow: 0 0 0 0.5px rgba(0,0,0,0.08);
+  }
+  .dark .ios-card-flat {
+    box-shadow: inset 0 0 0 0.5px rgba(255,255,255,0.06);
+  }
+
+  /* Section surface — slightly recessed vs the page bg; used to group content tiers */
+  .ios-section {
+    background-color: #E5E5EB;
+    border-radius: 20px;
+    box-shadow: inset 0 0 0 0.5px rgba(60,60,67,0.08);
+  }
+  .dark .ios-section {
+    background-color: #141416;
+    box-shadow: inset 0 0 0 0.5px rgba(255,255,255,0.04);
+  }
+
+  /* Elevated card on dark backgrounds (meaningful use of dbg-tert) */
+  .ios-card-elev {
+    @apply bg-white dark:bg-ios-dbg-tert rounded-ios-md shadow-ios-3;
+  }
+
+  /* Standard full-width page container — reusable for every route */
+  .page-container {
+    @apply w-full mx-auto px-4 md:px-6 lg:px-8;
+    max-width: 1440px;
+  }
+  .page-narrow {
+    @apply w-full mx-auto px-4 md:px-6;
+    max-width: 960px;
+  }
+
+  /* iOS-style inset grouped list row with hairline separator */
+  .ios-list-row + .ios-list-row {
+    border-top: 0.5px solid rgba(60,60,67,0.18);
+  }
+  .dark .ios-list-row + .ios-list-row {
+    border-top-color: rgba(84,84,88,0.48);
+  }
+
+  /* Fill backgrounds (iOS "fill" semantic colors) */
+  .ios-fill-1 { background-color: rgba(120,120,128,0.12); }
+  .ios-fill-2 { background-color: rgba(120,120,128,0.08); }
+  .ios-fill-3 { background-color: rgba(118,118,128,0.06); }
+  .dark .ios-fill-1 { background-color: rgba(118,118,128,0.24); }
+  .dark .ios-fill-2 { background-color: rgba(118,118,128,0.16); }
+  .dark .ios-fill-3 { background-color: rgba(118,118,128,0.10); }
+
+  /* Hairline separator (sub-pixel on retina) */
+  .hairline-b { box-shadow: 0 0.5px 0 0 rgba(60,60,67,0.18); }
+  .hairline-t { box-shadow: 0 -0.5px 0 0 rgba(60,60,67,0.18); }
+  .dark .hairline-b { box-shadow: 0 0.5px 0 0 rgba(84,84,88,0.48); }
+  .dark .hairline-t { box-shadow: 0 -0.5px 0 0 rgba(84,84,88,0.48); }
+
+  /* Glass material (iOS blur bar) */
+  .ios-glass {
+    background-color: rgba(255,255,255,0.72);
+    backdrop-filter: saturate(180%) blur(24px);
+    -webkit-backdrop-filter: saturate(180%) blur(24px);
+  }
+  .dark .ios-glass {
+    background-color: rgba(28,28,30,0.72);
+  }
+  .ios-glass-heavy {
+    background-color: rgba(255,255,255,0.86);
+    backdrop-filter: saturate(180%) blur(32px);
+    -webkit-backdrop-filter: saturate(180%) blur(32px);
+  }
+  .dark .ios-glass-heavy {
+    background-color: rgba(28,28,30,0.86);
+  }
+
+  /* Primary pill button */
+  .ios-btn-primary {
+    @apply inline-flex items-center justify-center gap-1.5 bg-tint-500 text-white font-semibold rounded-full px-4 py-2.5 text-footnote;
+    @apply transition-all active:scale-[0.97];
+    box-shadow: 0 4px 14px rgba(94,106,210,0.32), 0 1px 2px rgba(94,106,210,0.14);
+  }
+  .ios-btn-primary:hover { background-color: #4B55B8; }
+  .ios-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Secondary pill button (tinted fill) */
+  .ios-btn-tinted {
+    @apply inline-flex items-center justify-center gap-1.5 font-semibold rounded-full px-4 py-2 text-footnote;
+    @apply transition-all active:scale-[0.97];
+    background-color: rgba(94,106,210,0.12);
+    color: #3C4596;
+  }
+  .ios-btn-tinted:hover { background-color: rgba(94,106,210,0.18); }
+  .dark .ios-btn-tinted {
+    background-color: rgba(118,122,210,0.22);
+    color: #BBC4F6;
+  }
+  .dark .ios-btn-tinted:hover { background-color: rgba(118,122,210,0.28); }
+
+  /* Gray pill button (iOS secondary) */
+  .ios-btn-gray {
+    @apply inline-flex items-center justify-center gap-1.5 font-semibold rounded-full px-4 py-2 text-footnote text-ios-label dark:text-ios-dlabel;
+    @apply transition-all active:scale-[0.97];
+    background-color: rgba(120,120,128,0.16);
+  }
+  .ios-btn-gray:hover { background-color: rgba(120,120,128,0.22); }
+  .dark .ios-btn-gray { background-color: rgba(118,118,128,0.24); }
+  .dark .ios-btn-gray:hover { background-color: rgba(118,118,128,0.32); }
+
+  /* iOS text input */
+  .ios-input {
+    @apply w-full bg-white dark:bg-ios-dbg-tert text-ios-label dark:text-ios-dlabel text-callout rounded-ios px-3.5 py-3 outline-none;
+    box-shadow: inset 0 0 0 0.5px rgba(60,60,67,0.18);
+    transition: box-shadow 180ms ease;
+  }
+  .dark .ios-input { box-shadow: inset 0 0 0 0.5px rgba(84,84,88,0.48); }
+  .ios-input:focus { box-shadow: inset 0 0 0 2px #5E6AD2; }
+  .ios-input::placeholder { color: rgba(60,60,67,0.42); }
+  .dark .ios-input::placeholder { color: rgba(235,235,245,0.30); }
+
+  /* Chevron row (nav-list style) */
+  .ios-chevron::after {
+    content: '';
+    width: 7px; height: 7px;
+    border-right: 2px solid rgba(60,60,67,0.3);
+    border-bottom: 2px solid rgba(60,60,67,0.3);
+    transform: rotate(-45deg);
+    display: inline-block;
+    margin-left: 8px;
+    flex-shrink: 0;
+  }
+  .dark .ios-chevron::after {
+    border-color: rgba(235,235,245,0.3);
   }
 }
 
@@ -31,8 +216,75 @@ main { -webkit-overflow-scrolling: touch; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Subtle grid pattern for digital card */
+/* Subtle dot pattern (for premium card backgrounds) */
 .dots-pattern {
-  background-image: radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px);
-  background-size: 12px 12px;
+  background-image: radial-gradient(rgba(255,255,255,0.10) 1px, transparent 1px);
+  background-size: 14px 14px;
+}
+
+/* Holographic shimmer for premium cards */
+.holo-shimmer {
+  background:
+    linear-gradient(115deg,
+      transparent 20%,
+      rgba(255,255,255,0.08) 42%,
+      rgba(255,255,255,0.22) 50%,
+      rgba(255,255,255,0.08) 58%,
+      transparent 80%);
+  background-size: 300% 100%;
+  animation: shimmer 4.5s ease-in-out infinite;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+/* Spectrum gradient border (for membership cards) */
+.spectrum-border {
+  background: linear-gradient(135deg,
+    #818CF8 0%, #5E6AD2 25%, #A855F7 50%, #EC4899 75%, #F59E0B 100%);
+}
+
+/* Line clamp helpers (safe for all browsers) */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
+/* iOS switch focus ring normalize */
+input[type="range"] {
+  appearance: none;
+  background: transparent;
+  height: 28px;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  background: rgba(120,120,128,0.2);
+  border-radius: 999px;
+}
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 24px; height: 24px;
+  background: #fff;
+  border-radius: 999px;
+  margin-top: -10px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.12), 0 0 0 0.5px rgba(0,0,0,0.1);
+  cursor: pointer;
+}
+.dark input[type="range"]::-webkit-slider-runnable-track {
+  background: rgba(118,118,128,0.3);
+}
+
+/* Native select arrow replacement handled in-component */
+select { color-scheme: light dark; }
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }

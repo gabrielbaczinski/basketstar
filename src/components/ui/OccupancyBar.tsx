@@ -2,23 +2,28 @@ interface OccupancyBarProps {
   ocupadas: number
   totais: number
   showLabel?: boolean
+  compact?: boolean
 }
 
-export default function OccupancyBar({ ocupadas, totais, showLabel = true }: OccupancyBarProps) {
+export default function OccupancyBar({ ocupadas, totais, showLabel = true, compact = false }: OccupancyBarProps) {
   const pct = totais > 0 ? Math.min(100, Math.round((ocupadas / totais) * 100)) : 0
-  const color = pct >= 100 ? 'bg-red-500' : pct >= 80 ? 'bg-amber-500' : 'bg-emerald-500'
+  const color = pct >= 100 ? '#FF3B30' : pct >= 80 ? '#FF9500' : '#34C759'
   const text = pct >= 100 ? 'Lotada' : `${ocupadas}/${totais} vagas`
-  const textColor = pct >= 100 ? 'text-red-600 dark:text-red-400' : pct >= 80 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'
+  const trackH = compact ? 'h-1' : 'h-1.5'
+
   return (
     <div className="w-full">
       {showLabel && (
-        <div className="flex justify-between items-center text-xs mb-1.5">
-          <span className={`font-medium ${textColor}`}>{text}</span>
-          <span className="text-gray-400 dark:text-gray-500">{pct}%</span>
+        <div className="flex justify-between items-center text-caption1 mb-1.5">
+          <span className="font-semibold" style={{ color }}>{text}</span>
+          <span className="text-ios-label-3 dark:text-ios-dlabel-3 tabular-nums">{pct}%</span>
         </div>
       )}
-      <div className="w-full h-1.5 bg-gray-100 dark:bg-[#1F1F23] rounded-full overflow-hidden">
-        <div className={`h-full ${color} transition-all duration-300`} style={{ width: `${pct}%` }} />
+      <div className={`w-full ${trackH} ios-fill-2 rounded-full overflow-hidden`}>
+        <div
+          className="h-full rounded-full transition-all duration-500 ease-out"
+          style={{ width: `${pct}%`, backgroundColor: color }}
+        />
       </div>
     </div>
   )

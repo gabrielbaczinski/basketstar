@@ -5,7 +5,7 @@ import { useTour } from '../context/TourContext'
 interface Rect { top: number; left: number; width: number; height: number }
 
 const PAD = 10
-const TOOLTIP_W = 288
+const TOOLTIP_W = 300
 
 function measureTarget(target: string): Rect | null {
   const el = document.querySelector(`[data-tour="${target}"]`)
@@ -65,42 +65,57 @@ export default function TourOverlay() {
     <>
       {rect ? (
         <>
-          <div className="fixed z-[99] bg-black/50 pointer-events-none"
+          <div className="fixed z-[99] bg-black/55 backdrop-blur-sm pointer-events-none"
             style={{ top: 0, left: 0, right: 0, height: Math.max(0, rect.top - PAD) }} />
-          <div className="fixed z-[99] bg-black/50 pointer-events-none"
+          <div className="fixed z-[99] bg-black/55 backdrop-blur-sm pointer-events-none"
             style={{ top: rect.top + rect.height + PAD, left: 0, right: 0, bottom: 0 }} />
-          <div className="fixed z-[99] bg-black/50 pointer-events-none"
+          <div className="fixed z-[99] bg-black/55 backdrop-blur-sm pointer-events-none"
             style={{ top: rect.top - PAD, left: 0, width: Math.max(0, rect.left - PAD), height: rect.height + PAD * 2 }} />
-          <div className="fixed z-[99] bg-black/50 pointer-events-none"
+          <div className="fixed z-[99] bg-black/55 backdrop-blur-sm pointer-events-none"
             style={{ top: rect.top - PAD, left: rect.left + rect.width + PAD, right: 0, height: rect.height + PAD * 2 }} />
           <div
-            className="fixed z-[100] rounded-lg pointer-events-none ring-2 ring-[#5E6AD2]"
-            style={{ top: rect.top - PAD, left: rect.left - PAD, width: rect.width + PAD * 2, height: rect.height + PAD * 2 }}
+            className="fixed z-[100] rounded-ios-md pointer-events-none"
+            style={{
+              top: rect.top - PAD,
+              left: rect.left - PAD,
+              width: rect.width + PAD * 2,
+              height: rect.height + PAD * 2,
+              boxShadow: '0 0 0 3px rgba(94,106,210,0.9), 0 0 0 8px rgba(94,106,210,0.3)',
+            }}
           />
         </>
       ) : (
-        <div className="fixed inset-0 z-[99] bg-black/50 pointer-events-none" />
+        <div className="fixed inset-0 z-[99] bg-black/55 backdrop-blur-sm pointer-events-none" />
       )}
 
-      <div style={tooltipStyle} className="bg-white dark:bg-[#1A1A1E] rounded-lg shadow-2xl p-4">
+      <div
+        style={tooltipStyle}
+        className="ios-glass-heavy rounded-ios-md p-4 animate-scale-in"
+        role="dialog"
+        aria-live="polite"
+      >
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] font-semibold text-[#5E6AD2] uppercase tracking-wider">
+          <span className="text-caption2 font-bold text-tint-600 dark:text-tint-300 uppercase tracking-wider">
             Passo {currentStep + 1} de {steps.length}
           </span>
           <button
             onClick={endTour}
-            className="w-5 h-5 rounded flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            className="w-6 h-6 rounded-full ios-fill-2 flex items-center justify-center text-ios-label-2 dark:text-ios-dlabel-2 hover:text-ios-label dark:hover:text-ios-dlabel transition-colors"
           >
             <X size={12} />
           </button>
         </div>
-        <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">{step.title}</h4>
-        <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">{step.body}</p>
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-[#2A2A30]">
+        <h4 className="text-callout font-semibold text-ios-label dark:text-ios-dlabel mb-1">
+          {step.title}
+        </h4>
+        <p className="text-footnote text-ios-label-2 dark:text-ios-dlabel-2 leading-relaxed">
+          {step.body}
+        </p>
+        <div className="flex items-center justify-between mt-3 pt-3 hairline-t">
           <button
             onClick={prevStep}
             disabled={currentStep === 0}
-            className="text-xs text-gray-500 dark:text-gray-400 disabled:opacity-30 hover:text-gray-700 dark:hover:text-gray-200 flex items-center gap-0.5 transition-colors"
+            className="text-caption1 font-semibold text-ios-label-2 dark:text-ios-dlabel-2 disabled:opacity-30 hover:text-ios-label dark:hover:text-ios-dlabel flex items-center gap-0.5 transition-colors"
           >
             <ChevronLeft size={13} /> Anterior
           </button>
@@ -108,13 +123,13 @@ export default function TourOverlay() {
             {steps.map((_, i) => (
               <span
                 key={i}
-                className={`rounded-full transition-all ${i === currentStep ? 'w-3 h-1.5 bg-[#5E6AD2]' : 'w-1.5 h-1.5 bg-gray-300 dark:bg-gray-600'}`}
+                className={`rounded-full transition-all ${i === currentStep ? 'w-4 h-1.5 bg-tint-500' : 'w-1.5 h-1.5 bg-ios-label-4 dark:bg-ios-dlabel-4'}`}
               />
             ))}
           </div>
           <button
             onClick={nextStep}
-            className="text-xs font-medium text-[#5E6AD2] hover:text-[#4B55B8] flex items-center gap-0.5 transition-colors"
+            className="text-caption1 font-semibold text-tint-500 hover:text-tint-600 flex items-center gap-0.5 transition-colors"
           >
             {currentStep === steps.length - 1 ? 'Concluir' : 'Próximo'} <ChevronRight size={13} />
           </button>

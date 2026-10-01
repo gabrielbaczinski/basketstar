@@ -16,43 +16,39 @@ export default function ProfileSwitcher({ mobile }: Props) {
 
   if (mobile) {
     return (
-      <div className="inline-flex items-center bg-black/10 dark:bg-white/10 backdrop-blur-sm rounded-md p-0.5">
-        <button
-          onClick={() => set('aluno')}
-          className={`text-[11px] font-semibold px-3 py-1 rounded-sm transition-all ${
-            activeView === 'aluno'
-              ? 'bg-white dark:bg-[#2C2C2E] text-gray-900 dark:text-white shadow-sm'
-              : 'text-gray-500 dark:text-gray-400'
-          }`}
-        >
-          Aluno
-        </button>
-        <button
-          onClick={() => set('admin')}
-          className={`text-[11px] font-semibold px-3 py-1 rounded-sm transition-all ${
-            activeView === 'admin'
-              ? 'bg-white dark:bg-[#2C2C2E] text-gray-900 dark:text-white shadow-sm'
-              : 'text-gray-500 dark:text-gray-400'
-          }`}
-        >
-          Admin
-        </button>
+      <div className="inline-flex items-center ios-glass-heavy rounded-full p-0.5 shadow-ios-2">
+        {(['aluno', 'admin'] as const).map(v => (
+          <button
+            key={v}
+            onClick={() => set(v)}
+            className={`text-caption1 font-semibold px-3.5 py-1 rounded-full transition-all duration-150 ${
+              activeView === v
+                ? 'bg-white dark:bg-ios-dbg-tert text-ios-label dark:text-ios-dlabel shadow-ios-1'
+                : 'text-ios-label-2 dark:text-ios-dlabel-2'
+            }`}
+          >
+            {v === 'aluno' ? 'Aluno' : 'Admin'}
+          </button>
+        ))}
       </div>
     )
   }
 
-  const baseCls = 'text-xs font-medium px-3 py-1.5 rounded-md transition-colors'
-  const activeCls = 'bg-[#F4F4F5] dark:bg-[#1F1F23] text-gray-900 dark:text-white'
-  const inactiveCls = 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
-
   return (
-    <div className="inline-flex gap-1">
-      <button onClick={() => set('aluno')} className={`${baseCls} ${activeView === 'aluno' ? activeCls : inactiveCls}`}>
-        Aluno
-      </button>
-      <button onClick={() => set('admin')} className={`${baseCls} ${activeView === 'admin' ? activeCls : inactiveCls}`}>
-        Admin
-      </button>
+    <div className="inline-flex items-center ios-fill-2 rounded-full p-0.5">
+      {(['aluno', 'admin'] as const).map(v => (
+        <button
+          key={v}
+          onClick={() => set(v)}
+          className={`text-caption1 font-semibold px-3.5 py-1.5 rounded-full transition-all duration-150 ${
+            activeView === v
+              ? 'bg-white dark:bg-ios-dbg-tert text-ios-label dark:text-ios-dlabel shadow-ios-1'
+              : 'text-ios-label-2 dark:text-ios-dlabel-2 hover:text-ios-label dark:hover:text-ios-dlabel'
+          }`}
+        >
+          {v === 'aluno' ? 'Aluno' : 'Admin'}
+        </button>
+      ))}
     </div>
   )
 }

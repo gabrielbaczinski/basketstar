@@ -25,22 +25,29 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const iconFor = (t: ToastType) => {
     switch (t) {
-      case 'success': return <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-      case 'warning': return <AlertTriangle size={16} className="text-amber-500 shrink-0" />
-      case 'error': return <XCircle size={16} className="text-red-500 shrink-0" />
-      default: return <Info size={16} className="text-[#5E6AD2] shrink-0" />
+      case 'success': return <CheckCircle2 size={16} className="text-sys-green shrink-0" />
+      case 'warning': return <AlertTriangle size={16} className="text-sys-orange shrink-0" />
+      case 'error': return <XCircle size={16} className="text-sys-red shrink-0" />
+      default: return <Info size={16} className="text-tint-500 shrink-0" />
     }
   }
 
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 max-w-sm">
+      <div className="fixed bottom-24 md:bottom-6 right-4 z-[100] flex flex-col gap-2 max-w-sm">
         {toasts.map(t => (
-          <div key={t.id} className="flex items-start gap-2.5 bg-white dark:bg-[#111111] rounded-xl shadow-lg px-3.5 py-3 min-w-[280px] shadow-[0_10px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.6)]">
+          <div
+            key={t.id}
+            className="flex items-start gap-2.5 ios-glass-heavy rounded-ios-md px-3.5 py-3 min-w-[280px] animate-fade-up"
+            style={{ boxShadow: '0 16px 40px rgba(0,0,0,0.14), 0 0 0 0.5px rgba(0,0,0,0.06)' }}
+          >
             <div className="mt-0.5">{iconFor(t.type)}</div>
-            <p className="text-sm text-gray-900 dark:text-gray-100 flex-1 leading-snug">{t.message}</p>
-            <button onClick={() => dismiss(t.id)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 mt-0.5">
+            <p className="text-footnote text-ios-label dark:text-ios-dlabel flex-1 leading-snug">{t.message}</p>
+            <button
+              onClick={() => dismiss(t.id)}
+              className="text-ios-label-3 dark:text-ios-dlabel-3 hover:text-ios-label dark:hover:text-ios-dlabel mt-0.5"
+            >
               <X size={14} />
             </button>
           </div>

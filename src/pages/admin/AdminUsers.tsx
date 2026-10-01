@@ -12,8 +12,6 @@ interface CSVPreview {
   mapping: Record<string, string>
 }
 
-const INPUT_CLS = 'w-full bg-white dark:bg-[#1A1A1E] rounded-lg px-3 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 shadow-[0_0_0_1px_#E5E7EB] dark:shadow-[0_0_0_1px_#2A2A30] focus:shadow-[0_0_0_2px_#5E6AD2] outline-none transition-shadow'
-
 export default function AdminUsers() {
   const { data, addUsuario } = useApp()
   const { showToast } = useToast()
@@ -109,104 +107,118 @@ export default function AdminUsers() {
   }
 
   return (
-    <div className="space-y-5 max-w-6xl">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="page-container pt-4 md:pt-5 pb-6 space-y-4">
+      {/* Header with action buttons */}
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">Usuários</h1>
-          <p className="text-[13px] text-gray-400 dark:text-gray-500 mt-0.5">Cadastro e gerenciamento de alunos</p>
+          <h1 className="text-title2 md:text-title1 text-ios-label dark:text-ios-dlabel leading-none">Usuários</h1>
+          <p className="text-caption1 text-ios-label-2 dark:text-ios-dlabel-2 mt-1">
+            Cadastro e gerenciamento de alunos
+          </p>
         </div>
-        <button onClick={() => setOpenNew(true)}
-          className="inline-flex items-center gap-1.5 bg-[#5E6AD2] hover:bg-[#4B55B8] active:scale-95 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-all">
-          <Plus size={14} /> Novo aluno
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => fileRef.current?.click()}
+            className="ios-btn-gray"
+          >
+            <Upload size={13} /> Importar CSV
+          </button>
+          <button onClick={() => setOpenNew(true)} className="ios-btn-primary">
+            <Plus size={14} strokeWidth={2.6} /> Novo aluno
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".csv"
+            hidden
+            onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}
+          />
+        </div>
       </div>
 
-      {/* Stats strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* Compact stats pills */}
+      <div className="grid grid-cols-4 gap-2">
         {[
-          { label: 'Total de alunos', value: totalAlunos, color: '#5E6AD2' },
-          { label: 'Planos ativos', value: ativos, color: '#059669' },
-          { label: 'Inativos', value: totalAlunos - ativos, color: '#DC2626' },
-          { label: 'Resultado busca', value: alunos.length, color: '#D97706' },
+          { label: 'Total', value: totalAlunos, color: '#5E6AD2' },
+          { label: 'Ativos', value: ativos, color: '#34C759' },
+          { label: 'Inativos', value: totalAlunos - ativos, color: '#FF3B30' },
+          { label: 'Busca', value: alunos.length, color: '#FF9500' },
         ].map(s => (
-          <div key={s.label} className="bg-white dark:bg-[#111111] rounded-xl shadow-sm p-4 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${s.color}18` }}>
-              <Users size={14} style={{ color: s.color }} />
+          <div key={s.label} className="ios-card p-3 flex items-center gap-2.5">
+            <div
+              className="w-8 h-8 rounded-ios flex items-center justify-center shrink-0 text-white"
+              style={{
+                background: `linear-gradient(135deg, ${s.color} 0%, ${s.color}CC 100%)`,
+                boxShadow: `0 3px 8px ${s.color}44, inset 0 0 0 0.5px rgba(255,255,255,0.22)`,
+              }}
+            >
+              <Users size={13} />
             </div>
-            <div>
-              <p className="text-[20px] font-bold text-gray-900 dark:text-white tabular-nums leading-none">{s.value}</p>
-              <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 mt-0.5">{s.label}</p>
+            <div className="min-w-0">
+              <p className="text-footnote font-bold text-ios-label dark:text-ios-dlabel tabular-nums leading-none">
+                {s.value}
+              </p>
+              <p className="text-caption2 font-medium text-ios-label-3 dark:text-ios-dlabel-3 mt-0.5 truncate">
+                {s.label}
+              </p>
             </div>
           </div>
         ))}
       </div>
 
-      {/* CSV Import */}
+      {/* Drop zone + Search in a single row */}
       <div
         onDragOver={e => { e.preventDefault(); setDrag(true) }}
         onDragLeave={() => setDrag(false)}
         onDrop={onDrop}
-        onClick={() => fileRef.current?.click()}
-        className={`bg-white dark:bg-[#111111] rounded-xl shadow-sm p-5 text-center cursor-pointer transition-all ${
-          drag ? 'shadow-[0_0_0_2px_#5E6AD2]' : 'hover:bg-gray-50 dark:hover:bg-[#1A1A1E]'
-        }`}
+        className={`relative transition-all ${drag ? 'ring-2 ring-tint-500 rounded-ios-md' : ''}`}
       >
-        <input ref={fileRef} type="file" accept=".csv" hidden onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
-        <div className="flex flex-col items-center gap-1.5">
-          <div className="w-9 h-9 rounded-xl bg-[#EEF0FD] dark:bg-[#1F2545] text-[#5E6AD2] flex items-center justify-center mb-1">
-            <Upload size={16} />
-          </div>
-          <p className="text-[13px] font-semibold text-gray-900 dark:text-white">Arraste um CSV ou clique para importar</p>
-          <p className="text-[11px] text-gray-400 dark:text-gray-500 inline-flex items-center gap-1">
-            <Sparkles size={11} /> Mapeamento automático de colunas
-          </p>
-        </div>
-      </div>
-
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-ios-label-3 dark:text-ios-dlabel-3 pointer-events-none" size={15} />
         <input
           value={q}
           onChange={e => setQ(e.target.value)}
-          placeholder="Buscar por nome, email ou celular…"
-          className="w-full pl-10 pr-3 py-2.5 bg-white dark:bg-[#1A1A1E] rounded-xl text-[13px] text-gray-900 dark:text-white placeholder-gray-400 shadow-sm focus:shadow-[0_0_0_2px_#5E6AD2] outline-none transition-shadow"
+          placeholder={drag ? 'Solte o arquivo CSV aqui para importar…' : 'Buscar por nome, email ou celular — ou arraste um CSV'}
+          className="ios-input !pl-11 !rounded-ios-md"
         />
       </div>
 
       {/* Desktop table */}
-      <div className="hidden md:block bg-white dark:bg-[#111111] rounded-xl shadow-sm overflow-hidden">
+      <div className="hidden md:block ios-card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
+          <table className="min-w-full text-footnote">
             <thead>
-              <tr className="shadow-[0_1px_0_0_#F1F5F9] dark:shadow-[0_1px_0_0_#1A1A1E]">
-                <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Aluno</th>
-                <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Idade</th>
-                <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Celular</th>
-                <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Email</th>
-                <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Plano</th>
+              <tr className="hairline-b">
+                <th className="px-5 py-2.5 text-left text-caption2 font-semibold uppercase tracking-wider text-ios-label-3 dark:text-ios-dlabel-3">Aluno</th>
+                <th className="px-5 py-2.5 text-left text-caption2 font-semibold uppercase tracking-wider text-ios-label-3 dark:text-ios-dlabel-3">Idade</th>
+                <th className="px-5 py-2.5 text-left text-caption2 font-semibold uppercase tracking-wider text-ios-label-3 dark:text-ios-dlabel-3">Celular</th>
+                <th className="px-5 py-2.5 text-left text-caption2 font-semibold uppercase tracking-wider text-ios-label-3 dark:text-ios-dlabel-3">Email</th>
+                <th className="px-5 py-2.5 text-left text-caption2 font-semibold uppercase tracking-wider text-ios-label-3 dark:text-ios-dlabel-3">Plano</th>
               </tr>
             </thead>
             <tbody>
               {alunos.map((u, idx) => (
-                <tr key={u.id} className={`hover:bg-[#FAFAFA] dark:hover:bg-[#1A1A1E] transition-colors ${idx > 0 ? 'shadow-[0_-1px_0_0_#F1F5F9] dark:shadow-[0_-1px_0_0_#1A1A1E]' : ''}`}>
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-2.5">
+                <tr
+                  key={u.id}
+                  className={`hover:bg-ios-fill-3 dark:hover:bg-white/5 transition-colors ${idx > 0 ? 'hairline-b' : ''}`}
+                >
+                  <td className="px-5 py-2.5">
+                    <div className="flex items-center gap-3">
                       <Avatar name={u.nome} size="sm" />
-                      <span className="text-[13px] font-semibold text-gray-900 dark:text-white">{u.nome}</span>
+                      <span className="text-callout font-semibold text-ios-label dark:text-ios-dlabel">
+                        {u.nome}
+                      </span>
                     </div>
                   </td>
-                  <td className="px-5 py-3.5 text-[13px] text-gray-500 dark:text-gray-400">{u.idade}</td>
-                  <td className="px-5 py-3.5 text-[12px] text-gray-500 dark:text-gray-400 font-mono">{u.celular}</td>
-                  <td className="px-5 py-3.5 text-[13px] text-gray-500 dark:text-gray-400">{u.email}</td>
-                  <td className="px-5 py-3.5">
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                  <td className="px-5 py-2.5 text-footnote text-ios-label-2 dark:text-ios-dlabel-2 tabular-nums">{u.idade}</td>
+                  <td className="px-5 py-2.5 text-caption1 text-ios-label-2 dark:text-ios-dlabel-2 font-mono">{u.celular}</td>
+                  <td className="px-5 py-2.5 text-footnote text-ios-label-2 dark:text-ios-dlabel-2">{u.email}</td>
+                  <td className="px-5 py-2.5">
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-caption1 font-semibold ${
                       u.statusPlano === 'Ativo'
-                        ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
-                        : 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400'
+                        ? 'bg-sys-green/12 text-sys-green'
+                        : 'bg-sys-red/12 text-sys-red'
                     }`}>
-                      <span className={`w-1 h-1 rounded-full ${u.statusPlano === 'Ativo' ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                      <span className={`w-1.5 h-1.5 rounded-full ${u.statusPlano === 'Ativo' ? 'bg-sys-green' : 'bg-sys-red'}`} />
                       {u.statusPlano}
                     </span>
                   </td>
@@ -220,19 +232,21 @@ export default function AdminUsers() {
       {/* Mobile cards */}
       <div className="space-y-2 md:hidden">
         {alunos.map(u => (
-          <div key={u.id} className="bg-white dark:bg-[#111111] rounded-xl shadow-sm p-4 flex items-center gap-3">
+          <div key={u.id} className="ios-card p-4 flex items-center gap-3">
             <Avatar name={u.nome} />
             <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-semibold text-gray-900 dark:text-white truncate">{u.nome}</p>
-              <p className="text-[11px] text-gray-400 dark:text-gray-500 truncate">{u.email}</p>
-              <p className="text-[11px] text-gray-400 dark:text-gray-500 font-mono">{u.celular}</p>
+              <p className="text-callout font-semibold text-ios-label dark:text-ios-dlabel truncate">
+                {u.nome}
+              </p>
+              <p className="text-caption1 text-ios-label-2 dark:text-ios-dlabel-2 truncate">{u.email}</p>
+              <p className="text-caption1 text-ios-label-3 dark:text-ios-dlabel-3 font-mono">{u.celular}</p>
             </div>
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0 ${
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-caption2 font-bold shrink-0 ${
               u.statusPlano === 'Ativo'
-                ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
-                : 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400'
+                ? 'bg-sys-green/12 text-sys-green'
+                : 'bg-sys-red/12 text-sys-red'
             }`}>
-              <span className={`w-1 h-1 rounded-full ${u.statusPlano === 'Ativo' ? 'bg-emerald-500' : 'bg-red-500'}`} />
+              <span className={`w-1.5 h-1.5 rounded-full ${u.statusPlano === 'Ativo' ? 'bg-sys-green' : 'bg-sys-red'}`} />
               {u.statusPlano}
             </span>
           </div>
@@ -242,14 +256,8 @@ export default function AdminUsers() {
       {/* New user modal */}
       <Modal open={openNew} onClose={() => setOpenNew(false)} title="Novo aluno" footer={
         <div className="flex justify-end gap-2">
-          <button onClick={() => setOpenNew(false)}
-            className="bg-[#F4F4F5] dark:bg-[#1F1F23] hover:bg-gray-200 dark:hover:bg-[#2A2A30] text-gray-700 dark:text-gray-300 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-            Cancelar
-          </button>
-          <button onClick={submit}
-            className="bg-[#5E6AD2] hover:bg-[#4B55B8] text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
-            Cadastrar
-          </button>
+          <button onClick={() => setOpenNew(false)} className="ios-btn-gray">Cancelar</button>
+          <button onClick={submit} className="ios-btn-primary">Cadastrar</button>
         </div>
       }>
         <div className="space-y-3">
@@ -268,8 +276,11 @@ export default function AdminUsers() {
             <TextInput type="email" value={form.email} onChange={v => setForm(f => ({ ...f, email: v }))} />
           </Field>
           <Field label="Status do plano">
-            <select value={form.statusPlano} onChange={e => setForm(f => ({ ...f, statusPlano: e.target.value as 'Ativo' | 'Inativo' }))}
-              className={INPUT_CLS}>
+            <select
+              value={form.statusPlano}
+              onChange={e => setForm(f => ({ ...f, statusPlano: e.target.value as 'Ativo' | 'Inativo' }))}
+              className="ios-input"
+            >
               <option value="Ativo">Ativo</option>
               <option value="Inativo">Inativo</option>
             </select>
@@ -280,31 +291,34 @@ export default function AdminUsers() {
       {/* CSV preview modal */}
       <Modal open={!!csvPreview} onClose={() => setCsvPreview(null)} title="Importação de CSV" size="xl" footer={
         <div className="flex justify-end gap-2">
-          <button onClick={() => setCsvPreview(null)}
-            className="bg-[#F4F4F5] dark:bg-[#1F1F23] hover:bg-gray-200 dark:hover:bg-[#2A2A30] text-gray-700 dark:text-gray-300 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-            Cancelar
-          </button>
-          <button onClick={confirmImport}
-            className="bg-[#5E6AD2] hover:bg-[#4B55B8] text-white text-sm font-semibold px-4 py-2 rounded-lg inline-flex items-center gap-1.5 transition-colors">
+          <button onClick={() => setCsvPreview(null)} className="ios-btn-gray">Cancelar</button>
+          <button onClick={confirmImport} className="ios-btn-primary">
             <Check size={14} /> Confirmar importação
           </button>
         </div>
       }>
         {csvPreview && (
           <div className="space-y-4">
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-[#EEF0FD] dark:bg-[#1F2545] text-[#3730A3] dark:text-[#818CF8] text-[13px]">
+            <div className="flex items-center gap-2 p-3 rounded-ios bg-tint-500/10 text-tint-700 dark:text-tint-300 text-footnote">
               <Sparkles size={13} /> A IA identificou automaticamente as colunas. Ajuste se necessário.
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 dark:text-gray-500 mb-2">Mapeamento de colunas</p>
+              <p className="text-caption2 uppercase tracking-wider font-semibold text-ios-label-3 dark:text-ios-dlabel-3 mb-2 px-1">
+                Mapeamento de colunas
+              </p>
               <div className="grid gap-2 md:grid-cols-2">
                 {csvPreview.headers.map(h => (
-                  <div key={h} className="flex items-center gap-2 p-2.5 bg-[#F9F9FB] dark:bg-[#0D0D0F] rounded-lg">
-                    <FileText size={13} className="text-gray-400 shrink-0" />
-                    <span className="text-[13px] font-medium text-gray-900 dark:text-white flex-1 truncate">{h}</span>
-                    <select value={csvPreview.mapping[h]}
+                  <div key={h} className="flex items-center gap-2 p-3 ios-fill-3 rounded-ios">
+                    <FileText size={13} className="text-ios-label-3 dark:text-ios-dlabel-3 shrink-0" />
+                    <span className="text-footnote font-medium text-ios-label dark:text-ios-dlabel flex-1 truncate">
+                      {h}
+                    </span>
+                    <select
+                      value={csvPreview.mapping[h]}
                       onChange={e => setCsvPreview(p => p ? { ...p, mapping: { ...p.mapping, [h]: e.target.value } } : p)}
-                      className="text-xs bg-white dark:bg-[#1A1A1E] rounded-md px-2 py-1 text-gray-800 dark:text-gray-100 shadow-[0_0_0_1px_#E5E7EB] dark:shadow-[0_0_0_1px_#2A2A30] focus:outline-none">
+                      className="text-caption1 bg-white dark:bg-ios-dbg-tert rounded-ios-sm px-2 py-1 text-ios-label dark:text-ios-dlabel focus:outline-none"
+                      style={{ boxShadow: 'inset 0 0 0 0.5px rgba(60,60,67,0.18)' }}
+                    >
                       <option value="nome">Nome</option>
                       <option value="email">Email</option>
                       <option value="celular">Celular</option>
@@ -317,26 +331,28 @@ export default function AdminUsers() {
               </div>
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 dark:text-gray-500 mb-2">
+              <p className="text-caption2 uppercase tracking-wider font-semibold text-ios-label-3 dark:text-ios-dlabel-3 mb-2 px-1">
                 Prévia · {csvPreview.rows.length} {csvPreview.rows.length === 1 ? 'linha' : 'linhas'}
               </p>
-              <div className="overflow-x-auto rounded-lg bg-[#F9F9FB] dark:bg-[#0D0D0F] p-3 max-h-64">
-                <table className="min-w-full text-xs">
+              <div className="overflow-x-auto rounded-ios ios-fill-3 p-3 max-h-64">
+                <table className="min-w-full text-caption1">
                   <thead>
-                    <tr className="text-left text-gray-400 dark:text-gray-500">
-                      {csvPreview.headers.map(h => <th key={h} className="px-2 py-1 font-medium">{h}</th>)}
+                    <tr className="text-left text-ios-label-3 dark:text-ios-dlabel-3">
+                      {csvPreview.headers.map(h => <th key={h} className="px-2 py-1 font-semibold">{h}</th>)}
                     </tr>
                   </thead>
                   <tbody>
                     {csvPreview.rows.slice(0, 8).map((r, i) => (
-                      <tr key={i} className={i > 0 ? 'shadow-[0_-1px_0_0_#E5E7EB] dark:shadow-[0_-1px_0_0_#1F2937]' : ''}>
-                        {r.map((c, j) => <td key={j} className="px-2 py-1.5 text-gray-700 dark:text-gray-300">{c}</td>)}
+                      <tr key={i} className={i > 0 ? 'hairline-t' : ''}>
+                        {r.map((c, j) => <td key={j} className="px-2 py-1.5 text-ios-label-2 dark:text-ios-dlabel-2">{c}</td>)}
                       </tr>
                     ))}
                   </tbody>
                 </table>
                 {csvPreview.rows.length > 8 && (
-                  <p className="text-xs text-gray-400 mt-2 px-2">+ {csvPreview.rows.length - 8} outras linhas</p>
+                  <p className="text-caption1 text-ios-label-3 dark:text-ios-dlabel-3 mt-2 px-2">
+                    + {csvPreview.rows.length - 8} outras linhas
+                  </p>
                 )}
               </div>
             </div>
@@ -350,7 +366,9 @@ export default function AdminUsers() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">{label}</label>
+      <label className="block text-caption2 font-semibold text-ios-label-2 dark:text-ios-dlabel-2 mb-1.5 uppercase tracking-wider px-1">
+        {label}
+      </label>
       {children}
     </div>
   )
@@ -360,7 +378,12 @@ function TextInput({ value, onChange, type = 'text', placeholder }: {
   value: string; onChange: (v: string) => void; type?: string; placeholder?: string
 }) {
   return (
-    <input type={type} value={value} placeholder={placeholder} onChange={e => onChange(e.target.value)}
-      className="w-full bg-white dark:bg-[#1A1A1E] rounded-lg px-3 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 shadow-[0_0_0_1px_#E5E7EB] dark:shadow-[0_0_0_1px_#2A2A30] focus:shadow-[0_0_0_2px_#5E6AD2] outline-none transition-shadow" />
+    <input
+      type={type}
+      value={value}
+      placeholder={placeholder}
+      onChange={e => onChange(e.target.value)}
+      className="ios-input"
+    />
   )
 }

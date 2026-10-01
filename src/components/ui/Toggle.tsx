@@ -16,17 +16,18 @@ export default function Toggle({ checked, onChange, label, disabled }: TogglePro
         aria-checked={checked}
         disabled={disabled}
         onClick={() => !disabled && onChange(!checked)}
-        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-          checked ? 'bg-[#5E6AD2]' : 'bg-gray-300 dark:bg-[#2A2A30]'
+        className={`relative inline-flex h-[31px] w-[51px] items-center rounded-full transition-colors duration-200 ${
+          checked ? 'bg-sys-green' : 'bg-ios-fill-1 dark:bg-ios-dfill-1'
         }`}
       >
         <span
-          className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-            checked ? 'translate-x-4' : 'translate-x-0.5'
+          className={`inline-block h-[27px] w-[27px] transform rounded-full bg-white transition-transform duration-200 ease-out ${
+            checked ? 'translate-x-[22px]' : 'translate-x-[2px]'
           }`}
+          style={{ boxShadow: '0 3px 8px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.08)' }}
         />
       </button>
-      {label && <span className="text-sm text-gray-700 dark:text-gray-300 select-none">{label}</span>}
+      {label && <span className="text-callout text-ios-label dark:text-ios-dlabel select-none">{label}</span>}
     </label>
   )
 }

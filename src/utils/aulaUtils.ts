@@ -5,7 +5,8 @@ export function getBookingDia(aula: Aula, dia: string): BookingDia {
 }
 
 export function getVagasDisponiveisDia(aula: Aula, dia: string): number {
-  return aula.vagasTotais - getBookingDia(aula, dia).inscritos.length
+  const total = Number(aula.vagasTotais) || 0
+  return Math.max(0, total - getBookingDia(aula, dia).inscritos.length)
 }
 
 export function isInscritoDia(aula: Aula, dia: string, userId: string): boolean {
@@ -25,8 +26,10 @@ export function getAllInscritos(aula: Aula): string[] {
 export function getMediaOcupacaoPct(aula: Aula): number {
   const dias = aula.diasSemana
   if (dias.length === 0) return 0
+  const vagas = Number(aula.vagasTotais) || 0
+  if (vagas === 0) return 0
   const total = dias.reduce((sum, dia) => sum + getBookingDia(aula, dia).inscritos.length, 0)
-  return total / dias.length / aula.vagasTotais
+  return total / dias.length / vagas
 }
 
 export function getMaxOcupados(aula: Aula): number {
