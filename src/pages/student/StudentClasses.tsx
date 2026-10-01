@@ -8,7 +8,6 @@ import Modal from '../../components/ui/Modal'
 
 const DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
 const DIAS_ABREV = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
-const MODALIDADES: ('Todas' | ModalidadeType)[] = ['Todas', 'Pilates', 'Muay Thai', 'Spinning']
 type ViewMode = 'dia' | 'semana' | 'tipo'
 
 const MOD_COLOR: Record<ModalidadeType, { dot: string; text: string; bg: string }> = {
@@ -54,18 +53,8 @@ function sortByHorario(aulas: Aula[]) {
   return [...aulas].sort((a, b) => a.horario.localeCompare(b.horario))
 }
 
-function occupancyColor(pct: number) {
-  if (pct >= 1) return 'bg-red-500'
-  if (pct >= 0.75) return 'bg-amber-400'
-  return 'bg-emerald-500'
-}
-
 const VIEW_SEG_ACTIVE = 'bg-white dark:bg-[#2A2A30] text-gray-900 dark:text-white shadow-sm'
 const VIEW_SEG_IDLE = 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-
-function ModDot({ mod }: { mod: ModalidadeType }) {
-  return <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: MOD_COLOR[mod].dot }} />
-}
 
 function FilterSelect({
   value, onChange, active, defaultValue, defaultLabel, options,
@@ -481,7 +470,10 @@ export default function StudentClasses() {
                     {alts.map(alt => (
                       <div key={alt.id} className="flex items-center justify-between p-3 bg-white dark:bg-[#1A1A1E] rounded-md shadow-sm">
                         <div>
-                          <ModBadge mod={alt.modalidade} />
+                          <span className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded ${MOD_COLOR[alt.modalidade].bg} ${MOD_COLOR[alt.modalidade].text}`}>
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: MOD_COLOR[alt.modalidade].dot }} />
+                            {alt.modalidade}
+                          </span>
                           <p className="text-[12px] text-gray-400 mt-1 flex items-center gap-1">
                             <Clock size={10} />{alt.horario} · {getVagasDisponiveisDia(alt, fullModal.dia)} vagas
                           </p>
