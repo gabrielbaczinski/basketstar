@@ -62,6 +62,32 @@ export const initialData: AppData = {
         'Quinta': { inscritos: ['u1', 'u3', 'u5', 'u7', 'u9'], filaEspera: [] },
       },
     },
+    // ── Test fixtures: aulas lotadas / quase lotadas em dias comuns ──
+    {
+      id: 'a7', modalidade: 'Pilates', professorId: 'p1',
+      horario: '06:30', diasSemana: ['Segunda', 'Quarta', 'Sexta'], vagasTotais: 6,
+      bookingsPorDia: {
+        Segunda: { inscritos: ['u2','u3','u4','u5','u6','admin1'], filaEspera: ['u7','u8'] },
+        Quarta:  { inscritos: ['u2','u3','u4','u5','u6','admin1'], filaEspera: ['u7'] },
+        Sexta:   { inscritos: ['u2','u3','u4','u5'], filaEspera: [] },
+      },
+    },
+    {
+      id: 'a8', modalidade: 'Muay Thai', professorId: 'p2',
+      horario: '20:00', diasSemana: ['Segunda', 'Quarta'], vagasTotais: 10,
+      bookingsPorDia: {
+        Segunda: { inscritos: ['u2','u3','u4','u5','u6','admin1','u7','u8','u9','u10'], filaEspera: ['u11','u12','u13'] },
+        Quarta:  { inscritos: ['u2','u3','u4','u5','u6','admin1','u7','u8'], filaEspera: [] },
+      },
+    },
+    {
+      id: 'a9', modalidade: 'Spinning', professorId: 'p1',
+      horario: '12:00', diasSemana: ['Terça', 'Quinta'], vagasTotais: 8,
+      bookingsPorDia: {
+        'Terça':  { inscritos: ['u2','u3','u4','u5','u6','admin1','u7','u8'], filaEspera: ['u9','u10'] },
+        'Quinta': { inscritos: ['u2','u3'], filaEspera: [] },
+      },
+    },
   ],
   usuarios: [
     { id: 'u1',    nome: 'Gabriel Santana', idade: 22, celular: '(41) 99999-9999', email: 'gabriel@email.com',  statusPlano: 'Ativo',   role: 'aluno' },

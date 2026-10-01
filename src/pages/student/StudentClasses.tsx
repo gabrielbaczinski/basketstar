@@ -92,9 +92,9 @@ function PillSelect({
             : 'ios-fill-2 text-ios-label dark:text-ios-dlabel hover:ios-fill-1'
         }`}
       >
-        {icon && <span className="opacity-80">{icon}</span>}
-        <span className="truncate max-w-[120px]">{display}</span>
-        <ChevronDown size={11} strokeWidth={2.5} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+        {icon && <span className="opacity-80 shrink-0">{icon}</span>}
+        <span className="truncate max-w-[140px]">{display}</span>
+        <ChevronDown size={11} strokeWidth={2.5} className={`shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
         <div
@@ -145,68 +145,139 @@ function ClassCard({
   const trending  = pct >= 0.75 && pct < 1
   const filaPos   = naFila ? booking.filaEspera.indexOf(userId) + 1 : 0
 
+  const actionBtn = inscrito ? (
+    <button
+      onClick={onCancel}
+      className="w-full text-caption1 font-semibold text-sys-red hover:bg-sys-red/10 py-1.5 rounded-full transition-colors whitespace-nowrap"
+    >
+      Cancelar
+    </button>
+  ) : naFila ? (
+    <button
+      onClick={onCancel}
+      className="w-full text-caption1 font-semibold text-sys-orange hover:bg-sys-orange/10 py-1.5 rounded-full transition-colors whitespace-nowrap"
+    >
+      Sair da fila
+    </button>
+  ) : full ? (
+    <button onClick={onFullClick} className="w-full ios-btn-gray !py-1.5 !text-caption1 !px-3 whitespace-nowrap">
+      Entrar na fila
+    </button>
+  ) : (
+    <button onClick={onBook} className="w-full ios-btn-primary !py-1.5 !text-caption1 !px-3 whitespace-nowrap">
+      Agendar
+    </button>
+  )
+
+  const statusChip = inscrito ? (
+    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-sys-green/14 text-sys-green text-caption2 font-bold rounded-full leading-none shrink-0 whitespace-nowrap">
+      <Check size={9} strokeWidth={3} /> Inscrito
+    </span>
+  ) : naFila ? (
+    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-sys-orange/18 text-sys-orange text-caption2 font-bold rounded-full leading-none shrink-0 whitespace-nowrap">
+      <Hourglass size={9} strokeWidth={2.6} /> Fila {filaPos}º
+    </span>
+  ) : trending ? (
+    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-sys-orange/14 text-sys-orange text-caption2 font-bold rounded-full leading-none shrink-0 whitespace-nowrap">
+      <Flame size={9} strokeWidth={2.6} /> Alta
+    </span>
+  ) : null
+
+  const ringShadow = inscrito
+    ? `0 0 0 1.5px ${accent}66, 0 1px 3px rgba(0,0,0,0.06)`
+    : naFila
+      ? `0 0 0 1.5px #FF950066, 0 1px 3px rgba(0,0,0,0.06)`
+      : undefined
+
   return (
     <article
-      className="group relative ios-card overflow-hidden flex flex-col transition-all hover:shadow-ios-3 hover:-translate-y-0.5"
-      style={{
-        boxShadow: inscrito
-          ? `0 0 0 1.5px ${accent}66, 0 1px 3px rgba(0,0,0,0.06)`
-          : naFila
-            ? `0 0 0 1.5px #FF950066, 0 1px 3px rgba(0,0,0,0.06)`
-            : undefined,
-      }}
+      className="group relative ios-card overflow-hidden transition-all hover:shadow-ios-3 sm:hover:-translate-y-0.5"
+      style={{ boxShadow: ringShadow }}
     >
       {/* Top accent strip */}
       <div className="h-1 w-full shrink-0" style={{ background: gradient }} />
 
-      <div className="flex-1 flex flex-col p-3.5 gap-2.5">
-        {/* Row 1 — modality + status chip */}
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-footnote font-semibold tracking-tight truncate" style={{ color: accent }}>
+      {/* ── MOBILE layout (horizontal row) ── */}
+      <div className="sm:hidden flex items-center gap-3 p-3 min-w-0">
+        {/* Time + day block */}
+        <div className="shrink-0 w-[56px]">
+          <p className="text-[22px] font-bold tabular-nums text-ios-label dark:text-ios-dlabel leading-none tracking-tight">
+            {aula.horario}
+          </p>
+          <p className="text-caption2 font-semibold uppercase tracking-wider text-ios-label-3 dark:text-ios-dlabel-3 mt-0.5">
+            {dia.slice(0, 3)}
+          </p>
+        </div>
+        {/* Middle: modality + professor + inline count */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="text-footnote font-semibold tracking-tight truncate" style={{ color: accent }}>
+              {aula.modalidade}
+            </span>
+            {statusChip}
+          </div>
+          <p className="text-caption1 text-ios-label-2 dark:text-ios-dlabel-2 mt-0.5 flex items-center gap-1 truncate">
+            <User size={10} className="opacity-70 shrink-0" />
+            <span className="truncate">{profNome}</span>
+          </p>
+          <div className="mt-1.5 flex items-center gap-2">
+            <div className="h-[3px] flex-1 min-w-0 rounded-full ios-fill-2 overflow-hidden">
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${Math.min(pct * 100, 100)}%`,
+                  background: pct >= 1 ? '#FF3B30' : pct >= 0.8 ? '#FF9500' : '#34C759',
+                }}
+              />
+            </div>
+            <span
+              className={`text-caption2 font-semibold tabular-nums shrink-0 ${
+                full ? 'text-sys-red' : vagas <= 3 ? 'text-sys-orange' : 'text-ios-label-3 dark:text-ios-dlabel-3'
+              }`}
+            >
+              {booking.inscritos.length}/{totalVag}
+            </span>
+          </div>
+        </div>
+        {/* Action */}
+        <div className="shrink-0 w-[88px]">{actionBtn}</div>
+      </div>
+
+      {/* ── DESKTOP layout (vertical card) ── */}
+      <div className="hidden sm:flex sm:flex-col p-3.5 gap-2.5 min-h-[172px]">
+        {/* Row 1 — modality + status */}
+        <div className="flex items-center justify-between gap-2 min-w-0">
+          <span className="text-footnote font-semibold tracking-tight truncate min-w-0" style={{ color: accent }}>
             {aula.modalidade}
           </span>
-          {inscrito && (
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-sys-green/14 text-sys-green text-caption2 font-bold rounded-full leading-none shrink-0">
-              <Check size={9} strokeWidth={3} /> Inscrito
-            </span>
-          )}
-          {!inscrito && naFila && (
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-sys-orange/18 text-sys-orange text-caption2 font-bold rounded-full leading-none shrink-0">
-              <Hourglass size={9} strokeWidth={2.6} /> Fila · {filaPos}º
-            </span>
-          )}
-          {!inscrito && !naFila && trending && (
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-sys-orange/14 text-sys-orange text-caption2 font-bold rounded-full leading-none shrink-0">
-              <Flame size={9} strokeWidth={2.6} /> Alta
-            </span>
-          )}
+          {statusChip}
         </div>
 
         {/* Row 2 — Big time */}
-        <div className="flex items-baseline gap-2">
+        <div className="flex items-baseline gap-2 min-w-0">
           <p className="text-[26px] font-bold tabular-nums text-ios-label dark:text-ios-dlabel leading-none tracking-tight">
             {aula.horario}
           </p>
-          <span className="text-caption1 font-semibold uppercase tracking-wider text-ios-label-3 dark:text-ios-dlabel-3">
+          <span className="text-caption2 font-semibold uppercase tracking-wider text-ios-label-3 dark:text-ios-dlabel-3">
             {dia.slice(0, 3)}
           </span>
         </div>
 
         {/* Row 3 — professor */}
-        <p className="text-caption1 text-ios-label-2 dark:text-ios-dlabel-2 flex items-center gap-1.5 truncate">
+        <p className="text-caption1 text-ios-label-2 dark:text-ios-dlabel-2 flex items-center gap-1.5 min-w-0">
           <User size={11} className="opacity-70 shrink-0" />
           <span className="truncate">{profNome}</span>
         </p>
 
-        {/* Row 4 — occupancy bar + count */}
-        <div className="mt-auto space-y-1.5">
-          <div className="flex items-center justify-between gap-2">
-            <span className="inline-flex items-center gap-1 text-caption1 font-semibold tabular-nums text-ios-label-2 dark:text-ios-dlabel-2">
-              <UsersIcon size={11} className="opacity-70" />
+        {/* Row 4 — occupancy */}
+        <div className="mt-auto space-y-1.5 min-w-0">
+          <div className="flex items-center justify-between gap-2 min-w-0">
+            <span className="inline-flex items-center gap-1 text-caption1 font-semibold tabular-nums text-ios-label-2 dark:text-ios-dlabel-2 min-w-0">
+              <UsersIcon size={11} className="opacity-70 shrink-0" />
               {booking.inscritos.length}/{totalVag}
             </span>
             <span
-              className={`text-caption1 font-semibold tabular-nums ${
+              className={`text-caption1 font-semibold tabular-nums shrink-0 whitespace-nowrap ${
                 full ? 'text-sys-red' : vagas <= 3 ? 'text-sys-orange' : 'text-ios-label-3 dark:text-ios-dlabel-3'
               }`}
             >
@@ -223,38 +294,14 @@ function ClassCard({
             />
           </div>
           {booking.filaEspera.length > 0 && (
-            <p className="text-caption2 text-ios-label-3 dark:text-ios-dlabel-3 tabular-nums">
-              {booking.filaEspera.length} na fila de espera
+            <p className="text-caption2 text-ios-label-3 dark:text-ios-dlabel-3 tabular-nums truncate">
+              {booking.filaEspera.length} na fila
             </p>
           )}
         </div>
 
         {/* Row 5 — action */}
-        <div className="pt-1">
-          {inscrito ? (
-            <button
-              onClick={onCancel}
-              className="w-full text-caption1 font-semibold text-sys-red hover:bg-sys-red/10 py-2 rounded-full transition-colors"
-            >
-              Cancelar inscrição
-            </button>
-          ) : naFila ? (
-            <button
-              onClick={onCancel}
-              className="w-full text-caption1 font-semibold text-sys-orange hover:bg-sys-orange/10 py-2 rounded-full transition-colors"
-            >
-              Sair da fila
-            </button>
-          ) : full ? (
-            <button onClick={onFullClick} className="w-full ios-btn-gray !py-2 !text-caption1">
-              Entrar na fila
-            </button>
-          ) : (
-            <button onClick={onBook} className="w-full ios-btn-primary !py-2 !text-caption1">
-              Agendar
-            </button>
-          )}
-        </div>
+        <div className="pt-1">{actionBtn}</div>
       </div>
     </article>
   )
@@ -292,6 +339,7 @@ export default function StudentClasses() {
   const profNome = (id: string) => data.professores.find(p => p.id === id)?.nome ?? id
 
   const horariosOpts = useMemo(() => [...new Set(data.aulas.map(a => a.horario))].sort(), [data.aulas])
+  const modalidadesOpts = useMemo(() => [...new Set(data.aulas.map(a => a.modalidade))].filter(Boolean).sort(), [data.aulas])
   const profsOpts = useMemo(
     () => data.professores.filter(p => data.aulas.some(a => a.professorId === p.id)),
     [data.aulas, data.professores],
@@ -320,6 +368,7 @@ export default function StudentClasses() {
     if (res === 'booked') showToast(`${aula.modalidade} — ${dia} ${aula.horario} agendado.`, 'success')
     else if (res === 'already_booked') showToast('Você já está inscrito neste horário.', 'info')
     else if (res === 'waitlisted') showToast('Você já está na fila de espera deste horário.', 'info')
+    else if (res === 'inactive') showToast('Matrícula inativa. Procure a recepção para regularizar.', 'warning')
     else if (res === 'full') setFullModal({ aula, dia })
   }
 
@@ -356,15 +405,15 @@ export default function StudentClasses() {
 
   return (
     <div className="page-container pt-4 md:pt-5 pb-6">
-      {/* Dense header: title + segmented control + filters all on one toolbar */}
-      <div className="pb-3 flex items-end justify-between gap-3 flex-wrap">
-        <div>
+      {/* Header: title stacks above seg-control on mobile; row on desktop */}
+      <div className="pb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-title2 md:text-title1 text-ios-label dark:text-ios-dlabel leading-none">Aulas</h1>
           <p className="text-caption1 text-ios-label-2 dark:text-ios-dlabel-2 mt-1">
             Escolha o dia e agende sua presença
           </p>
         </div>
-        <div className="inline-flex ios-fill-1 rounded-full p-0.5 gap-0.5">
+        <div className="inline-flex ios-fill-1 rounded-full p-0.5 gap-0.5 self-start sm:self-auto">
           <SegBtn active={view === 'dia'} onClick={() => setView('dia')}>
             <CalendarCheck size={12} strokeWidth={2.2} /> Dia
           </SegBtn>
@@ -420,7 +469,7 @@ export default function StudentClasses() {
               active={filterMod !== 'Todas'}
               options={[
                 { value: 'Todas', label: 'Todas as modalidades' },
-                ...(['Pilates', 'Muay Thai', 'Spinning'] as ModalidadeType[]).map(m => ({ value: m, label: m })),
+                ...modalidadesOpts.map(m => ({ value: m, label: m })),
               ]}
             />
             <PillSelect
@@ -661,7 +710,7 @@ export default function StudentClasses() {
       {/* ── TIPO view ── */}
       {view === 'tipo' && (
         <div className="space-y-6">
-          {(['Pilates', 'Muay Thai', 'Spinning'] as ModalidadeType[])
+          {modalidadesOpts
             .filter(mod => filterMod === 'Todas' || filterMod === mod)
             .map(mod => {
               const aulas = sortByHorario(aulasFiltered.filter(a => a.modalidade === mod))

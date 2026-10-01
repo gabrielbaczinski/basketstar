@@ -13,8 +13,15 @@ interface CSVPreview {
 }
 
 export default function AdminUsers() {
-  const { data, addUsuario } = useApp()
+  const { data, addUsuario, updateUsuarioStatus } = useApp()
   const { showToast } = useToast()
+
+  const toggleStatus = (u: Usuario) => {
+    const next = u.statusPlano === 'Ativo' ? 'Inativo' : 'Ativo'
+    updateUsuarioStatus(u.id, next)
+    showToast(`${u.nome.split(' ')[0]} ${next === 'Ativo' ? 'ativado' : 'inativado'}.`, next === 'Ativo' ? 'success' : 'warning')
+  }
+
   const [q, setQ] = useState('')
   const [openNew, setOpenNew] = useState(false)
   const [csvPreview, setCsvPreview] = useState<CSVPreview | null>(null)
@@ -213,14 +220,18 @@ export default function AdminUsers() {
                   <td className="px-5 py-2.5 text-caption1 text-ios-label-2 dark:text-ios-dlabel-2 font-mono">{u.celular}</td>
                   <td className="px-5 py-2.5 text-footnote text-ios-label-2 dark:text-ios-dlabel-2">{u.email}</td>
                   <td className="px-5 py-2.5">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-caption1 font-semibold ${
-                      u.statusPlano === 'Ativo'
-                        ? 'bg-sys-green/12 text-sys-green'
-                        : 'bg-sys-red/12 text-sys-red'
-                    }`}>
+                    <button
+                      onClick={() => toggleStatus(u)}
+                      title={u.statusPlano === 'Ativo' ? 'Inativar matrícula (bloqueia acesso)' : 'Ativar matrícula'}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-caption1 font-semibold transition-all active:scale-[0.96] ${
+                        u.statusPlano === 'Ativo'
+                          ? 'bg-sys-green/12 text-sys-green hover:bg-sys-green/20'
+                          : 'bg-sys-red/12 text-sys-red hover:bg-sys-red/20'
+                      }`}
+                    >
                       <span className={`w-1.5 h-1.5 rounded-full ${u.statusPlano === 'Ativo' ? 'bg-sys-green' : 'bg-sys-red'}`} />
                       {u.statusPlano}
-                    </span>
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -241,14 +252,17 @@ export default function AdminUsers() {
               <p className="text-caption1 text-ios-label-2 dark:text-ios-dlabel-2 truncate">{u.email}</p>
               <p className="text-caption1 text-ios-label-3 dark:text-ios-dlabel-3 font-mono">{u.celular}</p>
             </div>
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-caption2 font-bold shrink-0 ${
-              u.statusPlano === 'Ativo'
-                ? 'bg-sys-green/12 text-sys-green'
-                : 'bg-sys-red/12 text-sys-red'
-            }`}>
+            <button
+              onClick={() => toggleStatus(u)}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-caption2 font-bold shrink-0 transition-all active:scale-[0.96] ${
+                u.statusPlano === 'Ativo'
+                  ? 'bg-sys-green/12 text-sys-green'
+                  : 'bg-sys-red/12 text-sys-red'
+              }`}
+            >
               <span className={`w-1.5 h-1.5 rounded-full ${u.statusPlano === 'Ativo' ? 'bg-sys-green' : 'bg-sys-red'}`} />
               {u.statusPlano}
-            </span>
+            </button>
           </div>
         ))}
       </div>

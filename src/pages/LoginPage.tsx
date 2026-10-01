@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Dumbbell, Sun, Moon, ArrowRight, CheckCircle2, ChevronDown } from 'lucide-react'
+import { Dumbbell, Sun, Moon, ArrowRight, CheckCircle2, ChevronDown, AlertCircle } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 
 const FEATURES = [
@@ -11,9 +11,21 @@ const FEATURES = [
 export default function LoginPage() {
   const { data, login, isDark, toggleDark } = useApp()
   const [selected, setSelected] = useState<string>('u1')
+  const [loginError, setLoginError] = useState<string | null>(null)
 
   const alunos = data.usuarios.filter(u => u.role === 'aluno')
   const admins = data.usuarios.filter(u => u.role === 'admin')
+
+  const handleLogin = () => {
+    setLoginError(null)
+    const res = login(selected)
+    if (res === 'inactive') {
+      const u = data.usuarios.find(x => x.id === selected)
+      setLoginError(`A matrícula de ${u?.nome.split(' ')[0] ?? 'este aluno'} está inativa. Procure a recepção para regularizar.`)
+    } else if (res === 'not_found') {
+      setLoginError('Usuário não encontrado.')
+    }
+  }
 
   return (
     <div className="min-h-screen flex bg-white dark:bg-black">
@@ -152,8 +164,15 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {loginError && (
+              <div className="flex items-start gap-2 px-3.5 py-2.5 bg-sys-red/12 text-sys-red rounded-ios text-caption1">
+                <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                <span className="flex-1">{loginError}</span>
+              </div>
+            )}
+
             <button
-              onClick={() => login(selected)}
+              onClick={handleLogin}
               className="ios-btn-primary w-full !rounded-ios !py-3 !text-callout"
             >
               Entrar <ArrowRight size={15} strokeWidth={2.4} />

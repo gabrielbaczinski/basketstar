@@ -3,7 +3,8 @@ import type { AppData, Usuario, Aula, Aviso, Mensagem, Configuracoes, Attendance
 import { loadData, saveData, getCurrentUserId, setCurrentUser, clearCurrentUser, resetAppData } from '../data/storage'
 import { getBookingDia } from '../utils/aulaUtils'
 
-type BookResult = 'booked' | 'waitlisted' | 'full' | 'already_booked'
+type BookResult = 'booked' | 'waitlisted' | 'full' | 'already_booked' | 'inactive'
+type LoginResult = 'ok' | 'inactive' | 'not_found'
 
 interface AppContextType {
   data: AppData
@@ -11,7 +12,7 @@ interface AppContextType {
   isDark: boolean
   isOffline: boolean
   activeView: 'aluno' | 'admin'
-  login: (userId: string) => void
+  login: (userId: string) => LoginResult
   logout: () => void
   toggleDark: () => void
   setActiveView: (view: 'aluno' | 'admin') => void
@@ -26,6 +27,7 @@ interface AppContextType {
   markAttendance: (aulaId: string, userId: string, present: boolean, date?: string) => void
   getAttendance: (aulaId: string, date?: string) => Record<string, AttendanceStatus>
   addUsuario: (u: Omit<Usuario, 'id'>) => void
+  updateUsuarioStatus: (userId: string, status: 'Ativo' | 'Inativo') => void
   updateAula: (aula: Aula) => void
   addAula: (aula: Omit<Aula, 'id'>) => void
   deleteAula: (aulaId: string) => void
@@ -65,11 +67,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setData(prev => { const next = updater(prev); saveData(next); return next })
   }, [])
 
-  const login = useCallback((userId: string) => {
+  const login = useCallback((userId: string): LoginResult => {
+    const user = data.usuarios.find(u => u.id === userId)
+    if (!user) return 'not_found'
+    // Alunos com plano inativo não entram; admins sempre podem acessar.
+    if (user.role !== 'admin' && user.statusPlano === 'Inativo') return 'inactive'
     setCurrentUser(userId)
     setCurrentUserId(userId)
-    const user = data.usuarios.find(u => u.id === userId)
-    setActiveViewState(user?.role === 'admin' ? 'admin' : 'aluno')
+    setActiveViewState(user.role === 'admin' ? 'admin' : 'aluno')
+    return 'ok'
   }, [data.usuarios])
 
   const logout = useCallback(() => { clearCurrentUser(); setCurrentUserId(null) }, [])
@@ -78,6 +84,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const bookClassDia = useCallback((aulaId: string, dia: string): BookResult => {
     if (!currentUserId) return 'already_booked'
+    const me = data.usuarios.find(u => u.id === currentUserId)
+    if (me && me.role !== 'admin' && me.statusPlano === 'Inativo') return 'inactive'
     let result: BookResult | null = null
     updateData(d => {
       const aulas = d.aulas.map(a => {
@@ -104,7 +112,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     })
     // If result is still null, aula/dia couldn't be matched — treat as a transient error, not "full".
     return result ?? 'already_booked'
-  }, [currentUserId, updateData])
+  }, [currentUserId, updateData, data.usuarios])
 
   const cancelClassDia = useCallback((aulaId: string, dia: string): boolean => {
     if (!currentUserId) return false
@@ -187,6 +195,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     updateData(d => ({ ...d, usuarios: [...d.usuarios, newUser] }))
   }, [updateData])
 
+  const updateUsuarioStatus = useCallback((userId: string, status: 'Ativo' | 'Inativo') => {
+    updateData(d => ({ ...d, usuarios: d.usuarios.map(u => u.id === userId ? { ...u, statusPlano: status } : u) }))
+  }, [updateData])
+
   const updateAula = useCallback((aula: Aula) => {
     updateData(d => ({ ...d, aulas: d.aulas.map(a => a.id === aula.id ? aula : a) }))
   }, [updateData])
@@ -211,7 +223,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       login, logout, toggleDark, setActiveView,
       bookClassDia, cancelClassDia, joinWaitlistDia,
       updateConfiguracoes, addAviso, deleteAviso, sendMensagem,
-      markAttendance, getAttendance, addUsuario, updateAula, addAula, deleteAula,
+      markAttendance, getAttendance, addUsuario, updateUsuarioStatus, updateAula, addAula, deleteAula,
       resetDemo,
     }}>
       {children}

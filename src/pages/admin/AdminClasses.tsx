@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Pencil, ClipboardList, Check, X, Plus, Trash2, Upload, Download, AlertCircle } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import type { Aula, ModalidadeType } from '../../types'
-import Badge, { modalidadeVariant, modalidadeAccent, modalidadeGradient } from '../../components/ui/Badge'
+import Badge, { modalidadeVariant, modalidadeGradient } from '../../components/ui/Badge'
 import Modal from '../../components/ui/Modal'
 import OccupancyBar from '../../components/ui/OccupancyBar'
 import { useToast } from '../../context/ToastContext'
@@ -12,7 +12,7 @@ import { getBookingDia, getMaxOcupados } from '../../utils/aulaUtils'
 type Presence = 'present' | 'absent' | 'unset'
 
 const DIAS_SEMANA = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
-const MODALIDADES: ModalidadeType[] = ['Pilates', 'Muay Thai', 'Spinning']
+const DEFAULT_SUGGESTIONS: ModalidadeType[] = ['Pilates', 'Muay Thai', 'Spinning']
 
 export default function AdminClasses() {
   const { data, updateAula, addAula, deleteAula, markAttendance, getAttendance } = useApp()
@@ -26,6 +26,11 @@ export default function AdminClasses() {
 
   const professorNome = (id: string) => data.professores.find(p => p.id === id)?.nome ?? '—'
   const userName = (id: string) => data.usuarios.find(u => u.id === id)?.nome ?? id
+  // Suggestions = defaults + any custom modality already in use
+  const modalidadesSuggestions = Array.from(new Set([
+    ...DEFAULT_SUGGESTIONS,
+    ...data.aulas.map(a => a.modalidade),
+  ])).filter(Boolean)
 
   const openAttendance = (aula: Aula) => {
     setAttendance(aula)
@@ -190,7 +195,12 @@ export default function AdminClasses() {
 
       {/* New aula modal */}
       {showNew && (
-        <NewAulaModal onClose={() => setShowNew(false)} onSave={handleAddAula} professoresList={data.professores} />
+        <NewAulaModal
+          onClose={() => setShowNew(false)}
+          onSave={handleAddAula}
+          professoresList={data.professores}
+          sugestoes={modalidadesSuggestions}
+        />
       )}
 
       {/* Edit modal */}
@@ -201,6 +211,7 @@ export default function AdminClasses() {
           onSave={saveEdit}
           onDelete={handleDelete}
           professoresList={data.professores}
+          sugestoes={modalidadesSuggestions}
         />
       )}
 
@@ -294,9 +305,10 @@ interface EditModalProps {
   onSave: (a: Aula) => void
   onDelete: (id: string) => void
   professoresList: { id: string; nome: string; modalidades: string[] }[]
+  sugestoes: string[]
 }
 
-function EditAulaModal({ aula, onClose, onSave, onDelete, professoresList }: EditModalProps) {
+function EditAulaModal({ aula, onClose, onSave, onDelete, professoresList, sugestoes }: EditModalProps) {
   const [state, setState] = useState<Aula>(aula)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
@@ -339,6 +351,19 @@ function EditAulaModal({ aula, onClose, onSave, onDelete, professoresList }: Edi
       }
     >
       <div className="space-y-3">
+        <FieldLabel label="Modalidade">
+          <input
+            type="text"
+            list="modalidade-sugestoes-edit"
+            value={state.modalidade}
+            onChange={e => setState(s => ({ ...s, modalidade: e.target.value }))}
+            placeholder="Ex.: Pilates, Crossfit, Zumba…"
+            className="ios-input"
+          />
+          <datalist id="modalidade-sugestoes-edit">
+            {sugestoes.map(s => <option key={s} value={s} />)}
+          </datalist>
+        </FieldLabel>
         <FieldLabel label="Professor">
           <select
             value={state.professorId}
@@ -375,10 +400,11 @@ interface NewModalProps {
   onClose: () => void
   onSave: (aula: Omit<Aula, 'id'>) => void
   professoresList: { id: string; nome: string; modalidades: ModalidadeType[] }[]
+  sugestoes: string[]
 }
 
-function NewAulaModal({ onClose, onSave, professoresList }: NewModalProps) {
-  const [modalidade, setModalidade] = useState<ModalidadeType>('Pilates')
+function NewAulaModal({ onClose, onSave, professoresList, sugestoes }: NewModalProps) {
+  const [modalidade, setModalidade] = useState<ModalidadeType>('')
   const [professorId, setProfessorId] = useState(professoresList[0]?.id ?? '')
   const [horario, setHorario] = useState('07:00')
   const [diasSemana, setDiasSemana] = useState<string[]>([])
@@ -391,11 +417,13 @@ function NewAulaModal({ onClose, onSave, professoresList }: NewModalProps) {
   }
 
   const handleSave = () => {
+    const mod = modalidade.trim()
+    if (!mod) { setError('Informe o nome da modalidade.'); return }
     if (diasSemana.length === 0) { setError('Selecione ao menos um dia.'); return }
     if (!professorId) { setError('Selecione um professor.'); return }
     const bookingsPorDia: Record<string, { inscritos: string[]; filaEspera: string[] }> = {}
     diasSemana.forEach(dia => { bookingsPorDia[dia] = { inscritos: [], filaEspera: [] } })
-    onSave({ modalidade, professorId, horario, diasSemana, vagasTotais, bookingsPorDia })
+    onSave({ modalidade: mod, professorId, horario, diasSemana, vagasTotais, bookingsPorDia })
   }
 
   return (
@@ -412,23 +440,29 @@ function NewAulaModal({ onClose, onSave, professoresList }: NewModalProps) {
     >
       <div className="space-y-4">
         <FieldLabel label="Modalidade">
-          <div className="flex gap-1.5">
-            {MODALIDADES.map(m => {
-              const active = modalidade === m
-              return (
-                <button
-                  key={m}
-                  onClick={() => setModalidade(m)}
-                  className={`px-3.5 py-2 rounded-full text-caption1 font-semibold transition-all active:scale-[0.97] ${
-                    active ? 'text-white' : 'ios-fill-2 text-ios-label dark:text-ios-dlabel hover:ios-fill-1'
-                  }`}
-                  style={active ? { background: modalidadeGradient(m), boxShadow: `0 4px 12px ${modalidadeAccent(m)}44` } : undefined}
-                >
-                  {m}
-                </button>
-              )
-            })}
-          </div>
+          <input
+            type="text"
+            list="modalidade-sugestoes-new"
+            value={modalidade}
+            onChange={e => { setModalidade(e.target.value); setError('') }}
+            placeholder="Ex.: Pilates, Crossfit, Yoga, Zumba…"
+            className="ios-input"
+            autoFocus
+          />
+          <datalist id="modalidade-sugestoes-new">
+            {sugestoes.map(s => <option key={s} value={s} />)}
+          </datalist>
+          {modalidade.trim() && (
+            <div className="flex items-center gap-2 mt-2">
+              <span
+                className="inline-block w-3 h-3 rounded-full"
+                style={{ background: modalidadeGradient(modalidade.trim()) }}
+              />
+              <span className="text-caption2 text-ios-label-3 dark:text-ios-dlabel-3">
+                Cor atribuída automaticamente
+              </span>
+            </div>
+          )}
         </FieldLabel>
 
         <FieldLabel label="Professor">
@@ -499,7 +533,7 @@ function parseAulaCsv(raw: string, profs: { id: string; nome: string }[]): CsvRo
   return lines.map(line => {
     const [mod = '', prof = '', hor = '', dias = '', vg = ''] = line.split(',').map(s => s.trim().replace(/^"|"$/g, ''))
     const errors: string[] = []
-    if (!MODALIDADES.includes(mod as ModalidadeType)) errors.push(`Modalidade "${mod}" inválida`)
+    if (!mod.trim()) errors.push('Modalidade obrigatória')
     if (!hor.match(/^\d{2}:\d{2}$/)) errors.push('Horário deve ser HH:MM')
     const parsedDias = dias.split(';').map(d => d.trim()).filter(Boolean)
     if (parsedDias.length === 0) errors.push('Informe ao menos um dia')

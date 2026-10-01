@@ -1,4 +1,5 @@
-export type ModalidadeType = 'Pilates' | 'Muay Thai' | 'Spinning'
+/** Modalidade name is free-text; colors are derived deterministically from the name. */
+export type ModalidadeType = string
 export type ModoFilaType = 'AUTOMATICO' | 'CORRIDA'
 export type UserRole = 'aluno' | 'admin'
 
