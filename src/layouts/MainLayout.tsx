@@ -59,10 +59,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const doLogout = () => { logout(); navigate('/') }
 
   return (
-    <div className="h-screen overflow-hidden bg-[#F2F2F7] dark:bg-[#000000] text-gray-900 dark:text-gray-100 flex">
+    <div className="h-screen overflow-hidden bg-[#F2F2F7] dark:bg-[#090909] text-gray-900 dark:text-gray-100 flex">
 
       {/* ── Desktop sidebar ── */}
-      <aside className="hidden md:flex md:flex-col w-[220px] shrink-0 h-full bg-white dark:bg-[#111111] shadow-[1px_0_0_0_#E5E7EB] dark:shadow-[1px_0_0_0_#1f2937]">
+      <aside className="hidden md:flex md:flex-col w-[220px] shrink-0 h-full bg-gradient-to-b from-white to-[#F8F8FA] dark:from-[#111111] dark:to-[#0C0C0E] shadow-[1px_0_0_0_#E5E7EB] dark:shadow-[1px_0_0_0_#1f2937]">
         <div className="h-14 px-4 flex items-center gap-2">
           <div className="w-6 h-6 rounded-md bg-[#5E6AD2] flex items-center justify-center">
             <Dumbbell size={14} className="text-white" />
@@ -110,7 +110,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
         {/* Desktop top bar */}
-        <header className="shrink-0 h-14 bg-white dark:bg-[#111111] shadow-[0_1px_0_0_#E5E7EB] dark:shadow-[0_1px_0_0_#1f2937] hidden md:flex items-center px-6 z-30">
+        <header className="shrink-0 h-14 bg-gradient-to-r from-white to-[#FAFAFA] dark:from-[#111111] dark:to-[#0E0E10] shadow-[0_1px_0_0_#E5E7EB] dark:shadow-[0_1px_0_0_#1f2937] hidden md:flex items-center px-6 z-30">
           <h1 className="text-sm font-semibold text-gray-900 dark:text-white flex-1 truncate">{title}</h1>
           <div className="flex items-center gap-2">
             {isOffline && (

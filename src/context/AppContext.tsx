@@ -27,6 +27,8 @@ interface AppContextType {
   getAttendance: (aulaId: string, date?: string) => Record<string, AttendanceStatus>
   addUsuario: (u: Omit<Usuario, 'id'>) => void
   updateAula: (aula: Aula) => void
+  addAula: (aula: Omit<Aula, 'id'>) => void
+  deleteAula: (aulaId: string) => void
 }
 
 const AppContext = createContext<AppContextType | null>(null)
@@ -202,13 +204,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     updateData(d => ({ ...d, aulas: d.aulas.map(a => a.id === aula.id ? aula : a) }))
   }, [updateData])
 
+  const addAula = useCallback((aulaData: Omit<Aula, 'id'>) => {
+    const newAula: Aula = { ...aulaData, id: `a${Date.now()}${Math.random().toString(36).slice(2, 5)}` }
+    updateData(d => ({ ...d, aulas: [...d.aulas, newAula] }))
+  }, [updateData])
+
+  const deleteAula = useCallback((aulaId: string) => {
+    updateData(d => ({ ...d, aulas: d.aulas.filter(a => a.id !== aulaId) }))
+  }, [updateData])
+
   return (
     <AppContext.Provider value={{
       data, currentUser, isDark, isOffline, activeView,
       login, logout, toggleDark, setActiveView,
       bookClassDia, cancelClassDia, joinWaitlistDia,
       updateConfiguracoes, addAviso, deleteAviso, sendMensagem,
-      markAttendance, getAttendance, addUsuario, updateAula,
+      markAttendance, getAttendance, addUsuario, updateAula, addAula, deleteAula,
     }}>
       {children}
     </AppContext.Provider>
