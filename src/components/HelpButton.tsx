@@ -1,11 +1,24 @@
 import { useState } from 'react'
-import { HelpCircle } from 'lucide-react'
+import { HelpCircle, PlayCircle } from 'lucide-react'
+import { useLocation } from 'react-router-dom'
 import Modal from './ui/Modal'
 import { useApp } from '../context/AppContext'
+import { useTour } from '../context/TourContext'
+import { pageTours } from '../tours/definitions'
 
 export default function HelpButton() {
   const [open, setOpen] = useState(false)
   const { activeView } = useApp()
+  const { startTour } = useTour()
+  const location = useLocation()
+
+  const currentTour = pageTours[activeView]?.[location.pathname] ?? []
+  const hasTour = currentTour.length > 0
+
+  const handleStartTour = () => {
+    setOpen(false)
+    setTimeout(() => startTour(currentTour), 200)
+  }
 
   return (
     <>
@@ -18,6 +31,16 @@ export default function HelpButton() {
       </button>
 
       <Modal open={open} onClose={() => setOpen(false)} title="Ajuda rápida" size="lg">
+        {hasTour && (
+          <button
+            onClick={handleStartTour}
+            className="w-full mb-5 bg-[#5E6AD2]/8 dark:bg-[#5E6AD2]/10 hover:bg-[#5E6AD2]/12 text-[#3730A3] dark:text-[#A5B4FC] text-sm font-medium px-4 py-3 rounded-lg inline-flex items-center justify-center gap-2 transition-colors"
+          >
+            <PlayCircle size={16} />
+            Iniciar tour guiado desta página
+          </button>
+        )}
+
         {activeView === 'aluno' ? (
           <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
             <div>
@@ -26,7 +49,7 @@ export default function HelpButton() {
             </div>
             <div>
               <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Aula lotada</h4>
-              <p>Se a turma estiver lotada, você pode entrar na fila de espera ou ver sugestões de aulas alternativas. Ao ser promovido você recebe uma notificação.</p>
+              <p>Se a turma estiver lotada, você pode entrar na fila de espera. Ao ser promovido você recebe uma notificação.</p>
             </div>
             <div>
               <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Carteirinha digital</h4>
@@ -41,19 +64,19 @@ export default function HelpButton() {
           <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
             <div>
               <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Gerenciar aulas</h4>
-              <p>Em "Aulas" você pode editar vagas, trocar professores e registrar a chamada de presença.</p>
+              <p>Em "Aulas" você pode criar turmas, editar vagas, trocar professores e registrar chamada de presença. Use "Importar CSV" para subir a grade existente.</p>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Importar alunos</h4>
-              <p>Em "Usuários" arraste um arquivo CSV para importação com mapeamento automático de colunas via IA.</p>
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Gerenciar alunos</h4>
+              <p>Em "Usuários" você adiciona e visualiza os alunos cadastrados com status do plano.</p>
             </div>
             <div>
               <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Relatórios</h4>
-              <p>Analise ocupação, modalidades populares e horários de pico. Exporte em PDF ou Excel.</p>
+              <p>Analise ocupação, modalidades mais populares e horários de pico na aba "Relatórios".</p>
             </div>
             <div>
               <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Configurações</h4>
-              <p>Ajuste política de cancelamento, modo da fila (automática/corrida) e antecedência de agendamento.</p>
+              <p>Ajuste política de cancelamento, modo da fila (automático/corrida) e antecedência de agendamento.</p>
             </div>
           </div>
         )}

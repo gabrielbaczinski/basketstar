@@ -6,9 +6,11 @@ import {
   Sun, Moon, LogOut, WifiOff
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import { TourProvider } from '../context/TourContext'
 import ProfileSwitcher from '../components/ProfileSwitcher'
 import AIChat from '../components/AIChat'
 import HelpButton from '../components/HelpButton'
+import TourOverlay from '../components/TourOverlay'
 import Avatar from '../components/ui/Avatar'
 
 type IconComponent = React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>
@@ -59,6 +61,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const doLogout = () => { logout(); navigate('/') }
 
   return (
+    <TourProvider>
     <div className="h-screen overflow-hidden bg-[#F2F2F7] dark:bg-[#090909] text-gray-900 dark:text-gray-100 flex">
 
       {/* ── Desktop sidebar ── */}
@@ -205,6 +208,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           <ProfileSwitcher mobile />
         </div>
       </div>
+
+      <TourOverlay />
     </div>
+    </TourProvider>
   )
 }

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Pencil, ClipboardList, Check, X, Plus, Trash2 } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Pencil, ClipboardList, Check, X, Plus, Trash2, Upload, Download, AlertCircle } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import type { Aula, ModalidadeType } from '../../types'
 import Badge, { modalidadeVariant, modalidadeAccent } from '../../components/ui/Badge'
@@ -19,6 +19,7 @@ export default function AdminClasses() {
   const { showToast } = useToast()
   const [editing, setEditing] = useState<Aula | null>(null)
   const [showNew, setShowNew] = useState(false)
+  const [showCsv, setShowCsv] = useState(false)
   const [attendance, setAttendance] = useState<Aula | null>(null)
   const [attendanceDay, setAttendanceDay] = useState<string>('')
   const [attendanceState, setAttendanceState] = useState<Record<string, Presence>>({})
@@ -61,6 +62,12 @@ export default function AdminClasses() {
     setShowNew(false)
   }
 
+  const handleImportAulas = (aulasList: Omit<Aula, 'id'>[]) => {
+    aulasList.forEach(a => addAula(a))
+    showToast(`${aulasList.length} aula(s) importada(s).`, 'success')
+    setShowCsv(false)
+  }
+
   const saveAttendance = () => {
     if (!attendance) return
     Object.entries(attendanceState).forEach(([userId, presence]) => {
@@ -82,16 +89,26 @@ export default function AdminClasses() {
           <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">Gestão de aulas</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Edite vagas, professores e registre presenças</p>
         </div>
-        <button
-          onClick={() => setShowNew(true)}
-          className="shrink-0 bg-[#5E6AD2] hover:bg-[#4B55B8] text-white text-sm font-medium px-3 py-2 rounded-lg inline-flex items-center gap-1.5 transition-colors"
-        >
-          <Plus size={15} /> Nova aula
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            data-tour="admin-importar-csv"
+            onClick={() => setShowCsv(true)}
+            className="bg-white dark:bg-[#1A1A1E] hover:bg-gray-50 dark:hover:bg-[#222228] text-gray-700 dark:text-gray-300 text-sm font-medium px-3 py-2 rounded-lg inline-flex items-center gap-1.5 shadow-[0_0_0_1px_#E5E7EB] dark:shadow-[0_0_0_1px_#2A2A30] transition-colors"
+          >
+            <Upload size={14} /> Importar CSV
+          </button>
+          <button
+            data-tour="admin-nova-aula"
+            onClick={() => setShowNew(true)}
+            className="bg-[#5E6AD2] hover:bg-[#4B55B8] text-white text-sm font-medium px-3 py-2 rounded-lg inline-flex items-center gap-1.5 transition-colors"
+          >
+            <Plus size={15} /> Nova aula
+          </button>
+        </div>
       </div>
 
       {/* Desktop table */}
-      <div className="hidden md:block bg-white dark:bg-[#111111] rounded-lg shadow-sm overflow-hidden">
+      <div data-tour="admin-aulas-table" className="hidden md:block bg-white dark:bg-[#111111] rounded-lg shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
@@ -175,6 +192,15 @@ export default function AdminClasses() {
           </div>
         ))}
       </div>
+
+      {/* CSV import modal */}
+      {showCsv && (
+        <CsvImportModal
+          onClose={() => setShowCsv(false)}
+          onImport={handleImportAulas}
+          professoresList={data.professores}
+        />
+      )}
 
       {/* New aula modal */}
       {showNew && (
@@ -487,6 +513,192 @@ function NewAulaModal({ onClose, onSave, professoresList }: NewModalProps) {
             className={inputCls}
           />
         </div>
+      </div>
+    </Modal>
+  )
+}
+
+// ── CSV Import ──────────────────────────────────────────────────────────────
+
+const CSV_TEMPLATE = `modalidade,professor,horario,dias,vagas
+Pilates,Ana Souza,07:00,Segunda;Quarta,20
+Muay Thai,Carlos Lima,08:00,Terça;Quinta;Sábado,15
+Spinning,Fernanda Costa,09:00,Segunda;Quarta;Sexta,25`
+
+interface CsvRow {
+  modalidade: string
+  professor: string
+  horario: string
+  dias: string[]
+  vagas: number
+  errors: string[]
+}
+
+function parseAulaCsv(raw: string, profs: { id: string; nome: string }[]): CsvRow[] {
+  const lines = raw.trim().split('\n').filter(l => l.trim() && !l.toLowerCase().startsWith('modalidade'))
+  return lines.map(line => {
+    const [mod = '', prof = '', hor = '', dias = '', vg = ''] = line.split(',').map(s => s.trim().replace(/^"|"$/g, ''))
+    const errors: string[] = []
+    if (!MODALIDADES.includes(mod as ModalidadeType)) errors.push(`Modalidade "${mod}" inválida`)
+    if (!hor.match(/^\d{2}:\d{2}$/)) errors.push('Horário deve ser HH:MM')
+    const parsedDias = dias.split(';').map(d => d.trim()).filter(Boolean)
+    if (parsedDias.length === 0) errors.push('Informe ao menos um dia')
+    const vagasNum = Number(vg)
+    if (isNaN(vagasNum) || vagasNum < 1) errors.push('Vagas deve ser ≥ 1')
+    const profMatch = profs.find(p => p.nome.toLowerCase() === prof.toLowerCase())
+    if (!profMatch) errors.push(`Professor "${prof}" não encontrado`)
+    return { modalidade: mod, professor: prof, horario: hor, dias: parsedDias, vagas: vagasNum, errors }
+  })
+}
+
+interface CsvModalProps {
+  onClose: () => void
+  onImport: (aulas: Omit<Aula, 'id'>[]) => void
+  professoresList: { id: string; nome: string; modalidades: ModalidadeType[] }[]
+}
+
+function CsvImportModal({ onClose, onImport, professoresList }: CsvModalProps) {
+  const [csvText, setCsvText] = useState('')
+  const [rows, setRows] = useState<CsvRow[]>([])
+  const [parsed, setParsed] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = ev => { setCsvText(String(ev.target?.result ?? '')); setParsed(false) }
+    reader.readAsText(file, 'utf-8')
+  }
+
+  const handleParse = () => {
+    const result = parseAulaCsv(csvText, professoresList)
+    setRows(result)
+    setParsed(true)
+  }
+
+  const validRows = rows.filter(r => r.errors.length === 0)
+
+  const handleImport = () => {
+    const aulas: Omit<Aula, 'id'>[] = validRows.map(r => {
+      const prof = professoresList.find(p => p.nome.toLowerCase() === r.professor.toLowerCase())!
+      const bookingsPorDia: Record<string, { inscritos: string[]; filaEspera: string[] }> = {}
+      r.dias.forEach(d => { bookingsPorDia[d] = { inscritos: [], filaEspera: [] } })
+      return { modalidade: r.modalidade as ModalidadeType, professorId: prof.id, horario: r.horario, diasSemana: r.dias, vagasTotais: r.vagas, bookingsPorDia }
+    })
+    onImport(aulas)
+  }
+
+  const downloadTemplate = () => {
+    const blob = new Blob([CSV_TEMPLATE], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = 'template_aulas.csv'; a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  return (
+    <Modal open onClose={onClose} title="Importar aulas via CSV" size="lg" footer={
+      <div className="flex items-center justify-between gap-2">
+        <button
+          onClick={downloadTemplate}
+          className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 inline-flex items-center gap-1 transition-colors"
+        >
+          <Download size={12} /> Baixar template
+        </button>
+        <div className="flex gap-2">
+          <button onClick={onClose} className="bg-[#F4F4F5] dark:bg-[#1F1F23] hover:bg-gray-200 dark:hover:bg-[#2A2A30] text-gray-700 dark:text-gray-300 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+            Cancelar
+          </button>
+          {!parsed ? (
+            <button
+              onClick={handleParse}
+              disabled={!csvText.trim()}
+              className="bg-[#5E6AD2] hover:bg-[#4B55B8] disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            >
+              Visualizar
+            </button>
+          ) : (
+            <button
+              onClick={handleImport}
+              disabled={validRows.length === 0}
+              className="bg-[#5E6AD2] hover:bg-[#4B55B8] disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            >
+              Importar {validRows.length} aula{validRows.length !== 1 ? 's' : ''}
+            </button>
+          )}
+        </div>
+      </div>
+    }>
+      <div className="space-y-4">
+        {!parsed ? (
+          <>
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                Formato: <code className="bg-gray-100 dark:bg-[#1F1F23] px-1 rounded">modalidade, professor, horario, dias (separados por ;), vagas</code>
+              </p>
+              <div
+                onClick={() => fileRef.current?.click()}
+                className="border-2 border-dashed border-gray-200 dark:border-[#2A2A30] rounded-lg p-4 text-center cursor-pointer hover:border-[#5E6AD2]/50 transition-colors"
+              >
+                <Upload size={18} className="mx-auto text-gray-400 mb-1" />
+                <p className="text-xs text-gray-500 dark:text-gray-400">Clique para selecionar um arquivo .csv</p>
+                <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleFile} />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Ou cole o CSV aqui</label>
+              <textarea
+                value={csvText}
+                onChange={e => { setCsvText(e.target.value); setParsed(false) }}
+                rows={7}
+                placeholder={CSV_TEMPLATE}
+                className="w-full bg-white dark:bg-[#1A1A1E] rounded-lg px-3 py-2 text-xs font-mono text-gray-900 dark:text-white shadow-[0_0_0_1px_#E5E7EB] dark:shadow-[0_0_0_1px_#2A2A30] focus:shadow-[0_0_0_2px_#5E6AD2] outline-none resize-none transition-shadow"
+              />
+            </div>
+          </>
+        ) : (
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-gray-500 dark:text-gray-400">{rows.length} linha(s) encontrada(s)</p>
+              <button onClick={() => setParsed(false)} className="text-xs text-[#5E6AD2] hover:underline">Editar CSV</button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-xs">
+                <thead>
+                  <tr className="text-left text-[10px] uppercase text-gray-400 dark:text-gray-500 tracking-wider">
+                    <th className="pb-2 pr-3">Modalidade</th>
+                    <th className="pb-2 pr-3">Professor</th>
+                    <th className="pb-2 pr-3">Horário</th>
+                    <th className="pb-2 pr-3">Dias</th>
+                    <th className="pb-2 pr-3">Vagas</th>
+                    <th className="pb-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-[#1F1F23]">
+                  {rows.map((r, i) => (
+                    <tr key={i} className={r.errors.length > 0 ? 'bg-red-50/50 dark:bg-red-500/5' : ''}>
+                      <td className="py-1.5 pr-3 text-gray-900 dark:text-white">{r.modalidade || '—'}</td>
+                      <td className="py-1.5 pr-3 text-gray-700 dark:text-gray-300">{r.professor || '—'}</td>
+                      <td className="py-1.5 pr-3 font-mono text-gray-700 dark:text-gray-300">{r.horario || '—'}</td>
+                      <td className="py-1.5 pr-3 text-gray-500 dark:text-gray-400">{r.dias.join(', ') || '—'}</td>
+                      <td className="py-1.5 pr-3 text-gray-700 dark:text-gray-300">{isNaN(r.vagas) ? '—' : r.vagas}</td>
+                      <td className="py-1.5">
+                        {r.errors.length === 0 ? (
+                          <span className="text-emerald-600 dark:text-emerald-400 font-medium">OK</span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-red-500" title={r.errors.join('; ')}>
+                            <AlertCircle size={11} /> {r.errors.length} erro{r.errors.length !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     </Modal>
   )

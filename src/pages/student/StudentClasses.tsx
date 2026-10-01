@@ -214,7 +214,7 @@ export default function StudentClasses() {
         </div>
 
         {/* ── Filter bar ── */}
-        <div className="space-y-2">
+        <div data-tour="student-filtros" className="space-y-2">
           {/* Row 1: Modalidade */}
           <div className="flex items-center gap-1.5 px-4 md:px-0 overflow-x-auto no-scrollbar">
             <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider shrink-0 w-14">Modalidade</span>
@@ -258,7 +258,7 @@ export default function StudentClasses() {
 
         {/* Day strip */}
         {(view === 'dia' || view === 'semana') && (
-          <div className="px-4 md:px-0 pt-1">
+          <div data-tour="student-dias" className="px-4 md:px-0 pt-1">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-1">
                 <button onClick={() => setWeekOffset(o => o - 1)} className="w-7 h-7 flex items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 dark:hover:bg-[#1F1F23] transition-colors"><ChevronLeft size={14} /></button>
@@ -290,7 +290,7 @@ export default function StudentClasses() {
 
       {/* ── DIA view ── */}
       {view === 'dia' && (
-        <div className="space-y-2 px-4 md:px-0 pt-3 pb-4">
+        <div data-tour="student-aulas-list" className="space-y-2 px-4 md:px-0 pt-3 pb-4">
           {aulasNoDia.length === 0 ? (
             <div className="py-14 text-center text-gray-400 dark:text-gray-500">
               <SlidersHorizontal size={24} className="mx-auto mb-2 opacity-30" />
