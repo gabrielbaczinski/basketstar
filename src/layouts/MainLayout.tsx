@@ -196,9 +196,11 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         </div>
       </nav>
 
-      {/* Desktop floating buttons */}
+      {/* HelpButton — visible on all screens */}
+      <HelpButton />
+
+      {/* AIChat — desktop only */}
       <div className="hidden md:block">
-        <HelpButton />
         <AIChat />
       </div>
 
