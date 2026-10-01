@@ -171,12 +171,12 @@ export default function StudentDashboard() {
                       className="ios-list-row flex items-center gap-3 px-4 py-2.5"
                     >
                       <div className="w-1 self-stretch rounded-full shrink-0" style={{ background: gradient }} />
-                      <div className="shrink-0 w-[50px]">
+                      <div className="shrink-0 w-[64px]">
                         <p className="text-callout font-bold tabular-nums text-ios-label dark:text-ios-dlabel leading-none">
                           {aula.horario}
                         </p>
-                        <p className="text-caption2 font-semibold uppercase tracking-wider text-ios-label-3 dark:text-ios-dlabel-3 mt-0.5">
-                          {dia.slice(0, 3)}
+                        <p className="text-caption2 font-semibold text-ios-label-3 dark:text-ios-dlabel-3 mt-0.5 truncate">
+                          {dia}
                         </p>
                       </div>
                       <div className="flex-1 min-w-0">
@@ -208,12 +208,12 @@ export default function StudentDashboard() {
                       style={{ background: 'rgba(255,149,0,0.06)' }}
                     >
                       <div className="w-1 self-stretch rounded-full shrink-0 bg-sys-orange" />
-                      <div className="shrink-0 w-[50px]">
+                      <div className="shrink-0 w-[64px]">
                         <p className="text-callout font-bold tabular-nums text-ios-label dark:text-ios-dlabel leading-none">
                           {aula.horario}
                         </p>
-                        <p className="text-caption2 font-semibold uppercase tracking-wider text-ios-label-3 dark:text-ios-dlabel-3 mt-0.5">
-                          {dia.slice(0, 3)}
+                        <p className="text-caption2 font-semibold text-ios-label-3 dark:text-ios-dlabel-3 mt-0.5 truncate">
+                          {dia}
                         </p>
                       </div>
                       <div className="flex-1 min-w-0">

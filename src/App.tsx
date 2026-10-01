@@ -8,6 +8,7 @@ import StudentClasses from './pages/student/StudentClasses'
 import StudentDigitalCard from './pages/student/StudentDigitalCard'
 import StudentCommunity from './pages/student/StudentCommunity'
 import StudentChat from './pages/student/StudentChat'
+import StudentProfile from './pages/student/StudentProfile'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminClasses from './pages/admin/AdminClasses'
 import AdminUsers from './pages/admin/AdminUsers'
@@ -27,6 +28,7 @@ function AppRoutes() {
             <Route path="/" element={<StudentDashboard />} />
             <Route path="/aulas" element={<StudentClasses />} />
             <Route path="/carteirinha" element={<StudentDigitalCard />} />
+            <Route path="/perfil" element={<StudentProfile />} />
             <Route path="/comunidade" element={<StudentCommunity />} />
             <Route path="/chat" element={<StudentChat />} />
             <Route path="*" element={<Navigate to="/" replace />} />

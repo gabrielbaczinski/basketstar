@@ -2,7 +2,7 @@ import { useMemo, useRef, useState, useEffect } from 'react'
 import {
   ChevronLeft, ChevronRight, ChevronDown, Info, Clock, User, CalendarCheck,
   LayoutGrid, Tag, SlidersHorizontal, X, Check, Users as UsersIcon, Flame,
-  Hourglass,
+  Hourglass, ArrowUpDown, Calendar as CalendarIcon,
 } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import type { Aula, ModalidadeType } from '../../types'
@@ -13,7 +13,9 @@ import Modal from '../../components/ui/Modal'
 
 const DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
 const DIAS_ABREV = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
+const MESES_LONG = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro']
 type ViewMode = 'dia' | 'semana' | 'tipo'
+type SortBy = 'horario' | 'vagas-desc' | 'modalidade' | 'professor'
 
 function getWeekStart(offset: number): Date {
   const today = new Date()
@@ -37,11 +39,14 @@ function getWeekDays(weekOffset: number) {
       abbrev: DIAS_ABREV[i],
       dayNum: date.getDate(),
       monthShort: date.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
+      monthLong: MESES_LONG[date.getMonth()],
       isToday: date.getTime() === today.getTime(),
       isPast: date.getTime() < today.getTime(),
     }
   })
 }
+
+type WeekDay = ReturnType<typeof getWeekDays>[number]
 
 function getDefaultDay(): string {
   const map = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
@@ -51,6 +56,31 @@ function getDefaultDay(): string {
 
 function sortByHorario(aulas: Aula[]) {
   return [...aulas].sort((a, b) => a.horario.localeCompare(b.horario))
+}
+
+function sortAulas(aulas: Aula[], dia: string, sortBy: SortBy, profLookup: (id: string) => string): Aula[] {
+  const list = [...aulas]
+  switch (sortBy) {
+    case 'horario':
+      return list.sort((a, b) => a.horario.localeCompare(b.horario))
+    case 'vagas-desc':
+      return list.sort((a, b) => {
+        const va = getVagasDisponiveisDia(a, dia)
+        const vb = getVagasDisponiveisDia(b, dia)
+        if (vb !== va) return vb - va
+        return a.horario.localeCompare(b.horario)
+      })
+    case 'modalidade':
+      return list.sort((a, b) => {
+        const c = a.modalidade.localeCompare(b.modalidade, 'pt-BR')
+        return c !== 0 ? c : a.horario.localeCompare(b.horario)
+      })
+    case 'professor':
+      return list.sort((a, b) => {
+        const c = profLookup(a.professorId).localeCompare(profLookup(b.professorId), 'pt-BR')
+        return c !== 0 ? c : a.horario.localeCompare(b.horario)
+      })
+  }
 }
 
 /* ───────────────────────────── Pill dropdown ───────────────────────────── */
@@ -93,12 +123,12 @@ function PillSelect({
         }`}
       >
         {icon && <span className="opacity-80 shrink-0">{icon}</span>}
-        <span className="truncate max-w-[140px]">{display}</span>
+        <span className="truncate max-w-[160px]">{display}</span>
         <ChevronDown size={11} strokeWidth={2.5} className={`shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
         <div
-          className="absolute z-30 top-full mt-1.5 min-w-[160px] max-h-[280px] overflow-y-auto bg-white dark:bg-ios-dbg-tert rounded-ios-md shadow-ios-4 py-1 animate-scale-in origin-top-left"
+          className="absolute z-30 top-full mt-1.5 min-w-[180px] max-h-[280px] overflow-y-auto bg-white dark:bg-ios-dbg-tert rounded-ios-md shadow-ios-4 py-1 animate-scale-in origin-top-left"
           style={{ left: 0 }}
         >
           {options.map(opt => {
@@ -125,7 +155,6 @@ function PillSelect({
 }
 
 /* ─────────────────────── Class card (grid cell) ──────────────────────────────── */
-/* Vertical card ~140px tall. Modality header strip + content + action.          */
 
 function ClassCard({
   aula, dia, userId, profNome, onBook, onCancel, onFullClick,
@@ -200,12 +229,12 @@ function ClassCard({
       {/* ── MOBILE layout (horizontal row) ── */}
       <div className="sm:hidden flex items-center gap-3 p-3 min-w-0">
         {/* Time + day block */}
-        <div className="shrink-0 w-[56px]">
+        <div className="shrink-0 w-[64px]">
           <p className="text-[22px] font-bold tabular-nums text-ios-label dark:text-ios-dlabel leading-none tracking-tight">
             {aula.horario}
           </p>
-          <p className="text-caption2 font-semibold uppercase tracking-wider text-ios-label-3 dark:text-ios-dlabel-3 mt-0.5">
-            {dia.slice(0, 3)}
+          <p className="text-caption2 font-semibold text-ios-label-3 dark:text-ios-dlabel-3 mt-0.5 truncate">
+            {dia}
           </p>
         </div>
         {/* Middle: modality + professor + inline count */}
@@ -258,8 +287,8 @@ function ClassCard({
           <p className="text-[26px] font-bold tabular-nums text-ios-label dark:text-ios-dlabel leading-none tracking-tight">
             {aula.horario}
           </p>
-          <span className="text-caption2 font-semibold uppercase tracking-wider text-ios-label-3 dark:text-ios-dlabel-3">
-            {dia.slice(0, 3)}
+          <span className="text-caption2 font-semibold text-ios-label-3 dark:text-ios-dlabel-3 truncate">
+            {dia}
           </span>
         </div>
 
@@ -307,6 +336,46 @@ function ClassCard({
   )
 }
 
+/* ─────────────── Mini card used inside the week view columns ─────────────── */
+
+function WeekMiniCard({
+  aula, dia, userId, onClick,
+}: {
+  aula: Aula; dia: string; userId: string; onClick: () => void
+}) {
+  const booking  = getBookingDia(aula, dia)
+  const totalVag = Number(aula.vagasTotais) || 0
+  const vagas    = Math.max(0, totalVag - booking.inscritos.length)
+  const inscrito = isInscritoDia(aula, dia, userId)
+  const naFila   = isNaFilaDia(aula, dia, userId)
+  const full     = vagas <= 0 && !inscrito
+  const accent   = modalidadeAccent(aula.modalidade)
+
+  const statusLabel = inscrito ? 'Inscrito' : naFila ? 'Na fila' : full ? 'Lotada' : `${vagas} vaga${vagas !== 1 ? 's' : ''}`
+  const statusColor = inscrito ? 'text-sys-green' : naFila ? 'text-sys-orange' : full ? 'text-sys-red' : 'text-ios-label-3 dark:text-ios-dlabel-3'
+
+  return (
+    <button
+      onClick={onClick}
+      className="w-full text-left relative ios-card-flat overflow-hidden transition-all active:scale-[0.98] hover:shadow-ios-2 flex"
+    >
+      {/* Left accent bar */}
+      <div className="w-1 shrink-0 self-stretch" style={{ background: accent }} />
+      <div className="flex-1 min-w-0 p-2">
+        <p className="text-callout font-bold tabular-nums text-ios-label dark:text-ios-dlabel leading-none">
+          {aula.horario}
+        </p>
+        <p className="text-caption1 font-semibold truncate mt-1" style={{ color: accent }}>
+          {aula.modalidade}
+        </p>
+        <p className={`text-caption2 font-semibold mt-0.5 tabular-nums ${statusColor}`}>
+          {statusLabel}
+        </p>
+      </div>
+    </button>
+  )
+}
+
 /* ───────────────────────────── Main Page ───────────────────────────── */
 
 const SegBtn = ({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) => (
@@ -329,31 +398,34 @@ export default function StudentClasses() {
   const [selectedDay, setSelectedDay] = useState(getDefaultDay)
   const [weekOffset, setWeekOffset] = useState(0)
   const [filterMod, setFilterMod] = useState<'Todas' | ModalidadeType>('Todas')
-  const [filterHorario, setFilterHorario] = useState<string>('Todos')
-  const [filterProf, setFilterProf] = useState<string>('Todos')
+  const [sortBy, setSortBy] = useState<SortBy>('horario')
   const [fullModal, setFullModal] = useState<{ aula: Aula; dia: string } | null>(null)
+  const [confirmModal, setConfirmModal] = useState<{ aula: Aula; dia: string; kind: 'book' | 'cancel' | 'waitlist' } | null>(null)
+  const [dayPickerOpen, setDayPickerOpen] = useState(false)
   const [noticeDismissed, setNoticeDismissed] = useState(false)
 
   const userId = currentUser?.id ?? ''
   const weekDays = useMemo(() => getWeekDays(weekOffset), [weekOffset])
   const profNome = (id: string) => data.professores.find(p => p.id === id)?.nome ?? id
 
-  const horariosOpts = useMemo(() => [...new Set(data.aulas.map(a => a.horario))].sort(), [data.aulas])
   const modalidadesOpts = useMemo(() => [...new Set(data.aulas.map(a => a.modalidade))].filter(Boolean).sort(), [data.aulas])
-  const profsOpts = useMemo(
-    () => data.professores.filter(p => data.aulas.some(a => a.professorId === p.id)),
-    [data.aulas, data.professores],
-  )
 
   const aulasFiltered = useMemo(() => {
-    let list = filterMod === 'Todas' ? data.aulas : data.aulas.filter(a => a.modalidade === filterMod)
-    if (filterHorario !== 'Todos') list = list.filter(a => a.horario === filterHorario)
-    if (filterProf !== 'Todos') list = list.filter(a => a.professorId === filterProf)
-    return list
-  }, [data.aulas, filterMod, filterHorario, filterProf])
+    return filterMod === 'Todas' ? data.aulas : data.aulas.filter(a => a.modalidade === filterMod)
+  }, [data.aulas, filterMod])
 
-  const hasActiveFilters = filterMod !== 'Todas' || filterHorario !== 'Todos' || filterProf !== 'Todos'
-  const clearFilters = () => { setFilterMod('Todas'); setFilterHorario('Todos'); setFilterProf('Todos') }
+  const hasActiveFilters = filterMod !== 'Todas' || sortBy !== 'horario'
+  const clearFilters = () => { setFilterMod('Todas'); setSortBy('horario') }
+
+  const selectedWeekDay = useMemo(() => weekDays.find(d => d.name === selectedDay), [weekDays, selectedDay])
+  const selectedDayLabel = selectedWeekDay
+    ? `${selectedDay}, ${selectedWeekDay.dayNum} de ${selectedWeekDay.monthLong}`
+    : selectedDay
+
+  const bookingDescription = (dia: string) => {
+    const wd = weekDays.find(d => d.name === dia)
+    return wd ? `${dia}, ${wd.dayNum} de ${wd.monthLong}` : dia
+  }
 
   const handleBook = (aulaId: string, dia: string) => {
     const aula = data.aulas.find(a => a.id === aulaId)!
@@ -382,8 +454,26 @@ export default function StudentClasses() {
     showToast('Você entrou na fila de espera.', 'info')
   }
 
-  const aulasNoDia  = useMemo(() => sortByHorario(aulasFiltered.filter(a => a.diasSemana.includes(selectedDay))), [aulasFiltered, selectedDay])
-  const allHorarios = useMemo(() => [...new Set(aulasFiltered.map(a => a.horario))].sort(), [aulasFiltered])
+  // Request handlers — route through confirmation modal.
+  const requestBook = (aula: Aula, dia: string) => {
+    const vagas = getVagasDisponiveisDia(aula, dia)
+    const inscrito = isInscritoDia(aula, dia, userId)
+    const naFila = isNaFilaDia(aula, dia, userId)
+    if (vagas <= 0 && !inscrito && !naFila) {
+      setConfirmModal({ aula, dia, kind: 'waitlist' })
+    } else {
+      setConfirmModal({ aula, dia, kind: 'book' })
+    }
+  }
+  const requestCancel = (aula: Aula, dia: string) => {
+    setConfirmModal({ aula, dia, kind: 'cancel' })
+  }
+
+  const aulasNoDia = useMemo(
+    () => sortAulas(aulasFiltered.filter(a => a.diasSemana.includes(selectedDay)), selectedDay, sortBy, profNome),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [aulasFiltered, selectedDay, sortBy, data.professores],
+  )
 
   // Group aulas by period of day for the "Dia" view
   const periodGroups = useMemo(() => {
@@ -396,12 +486,17 @@ export default function StudentClasses() {
       else if (hour < 18) tarde.push(a)
       else noite.push(a)
     })
+    const sortGroup = (list: Aula[]) => sortAulas(list, selectedDay, sortBy, profNome)
     return [
-      { label: 'Manhã', icon: '☀', aulas: manha },
-      { label: 'Tarde', icon: '◐', aulas: tarde },
-      { label: 'Noite', icon: '☾', aulas: noite },
+      { label: 'Manhã', icon: '☀', aulas: sortGroup(manha) },
+      { label: 'Tarde', icon: '◐', aulas: sortGroup(tarde) },
+      { label: 'Noite', icon: '☾', aulas: sortGroup(noite) },
     ].filter(g => g.aulas.length > 0)
-  }, [aulasNoDia])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aulasNoDia, selectedDay, sortBy, data.professores])
+
+  // State for the Semana view: tap a mini card -> open details modal
+  const [weekDetails, setWeekDetails] = useState<{ aula: Aula; dia: string } | null>(null)
 
   return (
     <div className="page-container pt-4 md:pt-5 pb-6">
@@ -473,20 +568,17 @@ export default function StudentClasses() {
               ]}
             />
             <PillSelect
-              icon={<Clock size={11} strokeWidth={2.4} />}
-              label="Horário"
-              value={filterHorario}
-              onChange={setFilterHorario}
-              active={filterHorario !== 'Todos'}
-              options={[{ value: 'Todos', label: 'Qualquer horário' }, ...horariosOpts.map(h => ({ value: h, label: h }))]}
-            />
-            <PillSelect
-              icon={<User size={11} strokeWidth={2.4} />}
-              label="Professor"
-              value={filterProf}
-              onChange={setFilterProf}
-              active={filterProf !== 'Todos'}
-              options={[{ value: 'Todos', label: 'Qualquer professor' }, ...profsOpts.map(p => ({ value: p.id, label: p.nome }))]}
+              icon={<ArrowUpDown size={11} strokeWidth={2.4} />}
+              label="Ordenar"
+              value={sortBy}
+              onChange={v => setSortBy(v as SortBy)}
+              active={sortBy !== 'horario'}
+              options={[
+                { value: 'horario', label: 'Horário (crescente)' },
+                { value: 'vagas-desc', label: 'Mais vagas' },
+                { value: 'modalidade', label: 'Modalidade (A–Z)' },
+                { value: 'professor', label: 'Professor (A–Z)' },
+              ]}
             />
             {hasActiveFilters && (
               <button
@@ -512,16 +604,8 @@ export default function StudentClasses() {
             active={filterMod !== 'Todas'}
             options={[
               { value: 'Todas', label: 'Todas as modalidades' },
-              ...(['Pilates', 'Muay Thai', 'Spinning'] as ModalidadeType[]).map(m => ({ value: m, label: m })),
+              ...modalidadesOpts.map(m => ({ value: m, label: m })),
             ]}
-          />
-          <PillSelect
-            icon={<User size={11} strokeWidth={2.4} />}
-            label="Professor"
-            value={filterProf}
-            onChange={setFilterProf}
-            active={filterProf !== 'Todos'}
-            options={[{ value: 'Todos', label: 'Qualquer professor' }, ...profsOpts.map(p => ({ value: p.id, label: p.nome }))]}
           />
           {hasActiveFilters && (
             <button
@@ -534,10 +618,30 @@ export default function StudentClasses() {
         </div>
       )}
 
-      {/* Compact day strip — row of chip pills, not big blocks */}
+      {/* ── Day picker: full-width button on mobile, pills on desktop ── */}
       {(view === 'dia' || view === 'semana') && (
         <div data-tour="student-dias" className="mb-3">
-          <div className="flex gap-1 overflow-x-auto no-scrollbar">
+          {/* Mobile: large button opens day-picker modal */}
+          <button
+            onClick={() => setDayPickerOpen(true)}
+            className="sm:hidden w-full flex items-center gap-3 px-4 py-3 ios-card active:scale-[0.99] transition-all"
+          >
+            <div className="w-9 h-9 rounded-full bg-tint-500/14 text-tint-600 dark:text-tint-300 flex items-center justify-center shrink-0">
+              <CalendarIcon size={16} strokeWidth={2.2} />
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-caption2 font-semibold uppercase tracking-wider text-ios-label-3 dark:text-ios-dlabel-3">
+                {weekOffset === 0 ? 'Esta semana' : weekOffset === 1 ? 'Próxima semana' : `Semana +${weekOffset}`}
+              </p>
+              <p className="text-callout font-semibold text-ios-label dark:text-ios-dlabel truncate">
+                {selectedDayLabel}
+              </p>
+            </div>
+            <ChevronDown size={16} className="text-ios-label-3 dark:text-ios-dlabel-3 shrink-0" />
+          </button>
+
+          {/* Desktop: segmented pills with full day name + date */}
+          <div className="hidden sm:flex gap-1.5 overflow-x-auto no-scrollbar">
             {weekDays.map(d => {
               const hasClasses = aulasFiltered.some(a => a.diasSemana.includes(d.name))
               const active = view === 'dia' && selectedDay === d.name
@@ -545,7 +649,7 @@ export default function StudentClasses() {
                 <button
                   key={d.name}
                   onClick={() => { setSelectedDay(d.name); if (view === 'semana') setView('dia') }}
-                  className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-200 relative ${
+                  className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full transition-all duration-200 ${
                     active
                       ? 'bg-tint-500 text-white shadow-tint-glow'
                       : d.isPast
@@ -553,11 +657,11 @@ export default function StudentClasses() {
                         : 'ios-fill-2 text-ios-label dark:text-ios-dlabel hover:ios-fill-1'
                   }`}
                 >
-                  <span className={`text-caption2 font-semibold uppercase tracking-wider ${d.isToday && !active ? 'text-tint-500' : ''}`}>
-                    {d.abbrev}
+                  <span className={`text-caption1 font-semibold ${d.isToday && !active ? 'text-tint-500' : ''}`}>
+                    {d.name}
                   </span>
-                  <span className={`text-caption1 font-bold tabular-nums ${d.isToday && !active ? 'text-tint-500' : ''}`}>
-                    {d.dayNum}
+                  <span className={`text-caption1 font-bold tabular-nums opacity-80 ${d.isToday && !active ? 'text-tint-500' : ''}`}>
+                    · {d.dayNum}
                   </span>
                   {hasClasses && !active && (
                     <span className="w-1 h-1 rounded-full bg-current opacity-50" />
@@ -617,8 +721,8 @@ export default function StudentClasses() {
                       dia={selectedDay}
                       userId={userId}
                       profNome={profNome(aula.professorId)}
-                      onBook={() => handleBook(aula.id, selectedDay)}
-                      onCancel={() => handleCancel(aula.id, selectedDay)}
+                      onBook={() => requestBook(aula, selectedDay)}
+                      onCancel={() => requestCancel(aula, selectedDay)}
                       onFullClick={() => setFullModal({ aula, dia: selectedDay })}
                     />
                   ))}
@@ -629,80 +733,50 @@ export default function StudentClasses() {
         </div>
       )}
 
-      {/* ── SEMANA view ── */}
+      {/* ── SEMANA view (7 columns of days with mini cards) ── */}
       {view === 'semana' && (
-        <div className="overflow-x-auto">
-          <div className="ios-card p-3 min-w-[640px]">
-            <table className="min-w-full text-caption2 border-separate border-spacing-y-0">
-              <thead>
-                <tr>
-                  <th className="w-12 pr-2 pb-2 text-left font-semibold text-ios-label-3 dark:text-ios-dlabel-3 uppercase tracking-wider">Hora</th>
-                  {weekDays.map(d => (
-                    <th
-                      key={d.name}
-                      className={`px-1 pb-2 text-center uppercase tracking-wider font-semibold ${
-                        d.isToday ? 'text-tint-500' : 'text-ios-label-3 dark:text-ios-dlabel-3'
-                      }`}
-                    >
-                      <div>{d.abbrev}</div>
-                      <div className={`text-footnote font-bold mt-0.5 tabular-nums ${d.isToday ? 'text-tint-500' : 'text-ios-label dark:text-ios-dlabel'}`}>
-                        {d.dayNum}
+        <div className="overflow-x-auto no-scrollbar -mx-4 px-4">
+          <div className="grid gap-2.5" style={{ gridTemplateColumns: 'repeat(7, minmax(160px, 1fr))' }}>
+            {weekDays.map(d => {
+              const aulasDoDia = sortAulas(
+                aulasFiltered.filter(a => a.diasSemana.includes(d.name)),
+                d.name,
+                sortBy,
+                profNome,
+              )
+              return (
+                <section
+                  key={d.name}
+                  className={`ios-card flex flex-col ${d.isPast ? 'opacity-60' : ''}`}
+                >
+                  <header className={`px-3 py-2.5 hairline-b ${d.isToday ? 'bg-tint-500/8' : ''}`}>
+                    <p className={`text-footnote font-semibold leading-tight ${d.isToday ? 'text-tint-600 dark:text-tint-300' : 'text-ios-label dark:text-ios-dlabel'}`}>
+                      {d.name}
+                    </p>
+                    <p className={`text-caption1 tabular-nums mt-0.5 ${d.isToday ? 'text-tint-500' : 'text-ios-label-3 dark:text-ios-dlabel-3'}`}>
+                      {d.dayNum} de {d.monthLong}
+                    </p>
+                  </header>
+                  <div className="p-2 flex flex-col gap-1.5 flex-1">
+                    {aulasDoDia.length === 0 ? (
+                      <div className="flex-1 flex items-center justify-center py-6">
+                        <span className="text-caption2 text-ios-label-4 dark:text-ios-dlabel-4">—</span>
                       </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {allHorarios.map(horario => (
-                  <tr key={horario} className="align-top">
-                    <td className="pr-2 py-1 text-ios-label-3 dark:text-ios-dlabel-3 font-mono tabular-nums text-caption2 whitespace-nowrap pt-2">
-                      {horario}
-                    </td>
-                    {weekDays.map(d => {
-                      const aulasDia = aulasFiltered.filter(a => a.horario === horario && a.diasSemana.includes(d.name))
-                      return (
-                        <td key={d.name} className="px-0.5 py-0.5 min-w-[62px]">
-                          {aulasDia.map(aula => {
-                            const totalVag = Number(aula.vagasTotais) || 0
-                            const vagas    = Math.max(0, totalVag - getBookingDia(aula, d.name).inscritos.length)
-                            const inscrito = isInscritoDia(aula, d.name, userId)
-                            const naFila   = isNaFilaDia(aula, d.name, userId)
-                            const full     = vagas <= 0
-                            const accent   = modalidadeAccent(aula.modalidade)
-                            return (
-                              <button
-                                key={aula.id}
-                                onClick={() => inscrito ? handleCancel(aula.id, d.name) : handleBook(aula.id, d.name)}
-                                disabled={d.isPast}
-                                title={`${aula.modalidade} ${aula.horario} — ${d.name}`}
-                                className={`w-full text-left rounded-ios-sm p-1.5 mb-0.5 leading-none transition-all ${
-                                  d.isPast ? 'opacity-30 cursor-default' : 'hover:scale-[1.02]'
-                                }`}
-                                style={{
-                                  background: inscrito ? `${accent}22` : full ? 'rgba(120,120,128,0.1)' : naFila ? 'rgba(255,149,0,0.18)' : `${accent}14`,
-                                  boxShadow: inscrito
-                                    ? `inset 0 0 0 1px ${accent}66`
-                                    : naFila ? `inset 0 0 0 1px #FF9500` : undefined,
-                                  color: inscrito || !full ? accent : naFila ? '#FF9500' : 'rgba(60,60,67,0.4)',
-                                }}
-                              >
-                                <div className="font-bold text-caption2">{aula.modalidade === 'Muay Thai' ? 'Muay' : aula.modalidade}</div>
-                                <div className="opacity-70 text-caption2 mt-0.5 tabular-nums">
-                                  {vagas > 0 ? `${vagas}v` : 'lot.'}
-                                </div>
-                              </button>
-                            )
-                          })}
-                          {aulasDia.length === 0 && (
-                            <div className="text-ios-label-4 dark:text-ios-dlabel-4 text-center text-caption2 py-1">·</div>
-                          )}
-                        </td>
-                      )
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    ) : (
+                      aulasDoDia.map(aula => (
+                        <WeekMiniCard
+                          key={aula.id}
+                          aula={aula}
+                          dia={d.name}
+                          userId={userId}
+                          onClick={() => setWeekDetails({ aula, dia: d.name })}
+                        />
+                      ))
+                    )}
+                  </div>
+                </section>
+              )
+            })}
           </div>
         </div>
       )}
@@ -753,9 +827,8 @@ export default function StudentClasses() {
                                 <button
                                   key={dia}
                                   onClick={() => {
-                                    if (inscrito) return handleCancel(aula.id, dia)
-                                    if (naFila) return handleCancel(aula.id, dia)
-                                    handleBook(aula.id, dia)
+                                    if (inscrito || naFila) return requestCancel(aula, dia)
+                                    requestBook(aula, dia)
                                   }}
                                   className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-caption1 font-semibold transition-all active:scale-[0.96]"
                                   style={{
@@ -766,7 +839,7 @@ export default function StudentClasses() {
                                       : naFila ? 'inset 0 0 0 1px #FF9500' : undefined,
                                   }}
                                 >
-                                  {dia.slice(0, 3)}
+                                  {dia}
                                   <span className="opacity-80 text-caption2 tabular-nums">
                                     {inscrito ? ' ×' : naFila ? ' fila' : full ? ' lot.' : ` ${vagas}v`}
                                   </span>
@@ -784,14 +857,61 @@ export default function StudentClasses() {
         </div>
       )}
 
-      {/* Full class modal */}
+      {/* ── Day-picker modal (mobile) ── */}
+      {dayPickerOpen && (
+        <DayPickerModal
+          weekDays={weekDays}
+          selectedDay={selectedDay}
+          weekOffset={weekOffset}
+          onSelect={(name) => { setSelectedDay(name); setDayPickerOpen(false) }}
+          onPrevWeek={() => setWeekOffset(o => o - 1)}
+          onNextWeek={() => setWeekOffset(o => o + 1)}
+          onClose={() => setDayPickerOpen(false)}
+        />
+      )}
+
+      {/* ── Confirmation modal (book / cancel / waitlist) ── */}
+      {confirmModal && (
+        <ConfirmationModal
+          aula={confirmModal.aula}
+          dia={confirmModal.dia}
+          kind={confirmModal.kind}
+          profNome={profNome(confirmModal.aula.professorId)}
+          dayLabel={bookingDescription(confirmModal.dia)}
+          onClose={() => setConfirmModal(null)}
+          onConfirm={() => {
+            const { aula, dia, kind } = confirmModal
+            if (kind === 'book') handleBook(aula.id, dia)
+            else if (kind === 'cancel') handleCancel(aula.id, dia)
+            else if (kind === 'waitlist') handleWaitlist(aula.id, dia)
+            setConfirmModal(null)
+          }}
+        />
+      )}
+
+      {/* ── Week-view details modal ── */}
+      {weekDetails && (
+        <ClassDetailsModal
+          aula={weekDetails.aula}
+          dia={weekDetails.dia}
+          userId={userId}
+          profNome={profNome(weekDetails.aula.professorId)}
+          dayLabel={bookingDescription(weekDetails.dia)}
+          onClose={() => setWeekDetails(null)}
+          onBook={() => { requestBook(weekDetails.aula, weekDetails.dia); setWeekDetails(null) }}
+          onCancel={() => { requestCancel(weekDetails.aula, weekDetails.dia); setWeekDetails(null) }}
+          onWaitlist={() => { requestBook(weekDetails.aula, weekDetails.dia); setWeekDetails(null) }}
+        />
+      )}
+
+      {/* Full class modal (shows alternatives) */}
       {fullModal && (
         <Modal open={!!fullModal} title="Aula lotada" onClose={() => setFullModal(null)}>
           <div className="space-y-4">
             <div className="flex items-start gap-2.5 p-3 ios-fill-2 rounded-ios">
               <Info size={14} className="text-ios-label-2 dark:text-ios-dlabel-2 shrink-0 mt-0.5" />
               <p className="text-footnote text-ios-label dark:text-ios-dlabel">
-                {fullModal.aula.modalidade} às {fullModal.aula.horario} — {fullModal.dia} está lotada.
+                {fullModal.aula.modalidade} às {fullModal.aula.horario} — {bookingDescription(fullModal.dia)} está lotada.
                 {getBookingDia(fullModal.aula, fullModal.dia).filaEspera.length > 0 &&
                   ` ${getBookingDia(fullModal.aula, fullModal.dia).filaEspera.length} na fila.`}
               </p>
@@ -852,5 +972,302 @@ export default function StudentClasses() {
         </Modal>
       )}
     </div>
+  )
+}
+
+/* ─────────────────────── Day-picker modal (mobile) ─────────────────────── */
+
+function DayPickerModal({
+  weekDays, selectedDay, weekOffset, onSelect, onPrevWeek, onNextWeek, onClose,
+}: {
+  weekDays: WeekDay[]
+  selectedDay: string
+  weekOffset: number
+  onSelect: (name: string) => void
+  onPrevWeek: () => void
+  onNextWeek: () => void
+  onClose: () => void
+}) {
+  const weekLabel = weekOffset === 0 ? 'Esta semana' : weekOffset === 1 ? 'Próxima semana' : weekOffset < 0 ? `Semana ${weekOffset}` : `Semana +${weekOffset}`
+  return (
+    <Modal open onClose={onClose} title="Escolher dia">
+      <div className="space-y-4">
+        {/* Week navigator */}
+        <div className="flex items-center justify-between gap-2">
+          <button
+            onClick={onPrevWeek}
+            className="w-9 h-9 rounded-full ios-fill-2 flex items-center justify-center text-ios-label-2 dark:text-ios-dlabel-2"
+            aria-label="Semana anterior"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <p className="text-callout font-semibold text-ios-label dark:text-ios-dlabel">
+            {weekLabel}
+          </p>
+          <button
+            onClick={onNextWeek}
+            className="w-9 h-9 rounded-full ios-fill-2 flex items-center justify-center text-ios-label-2 dark:text-ios-dlabel-2"
+            aria-label="Próxima semana"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
+
+        {/* Weekday headers */}
+        <div className="grid grid-cols-7 gap-1.5">
+          {DIAS_ABREV.map(abbr => (
+            <p
+              key={abbr}
+              className="text-center text-caption2 font-semibold uppercase tracking-wider text-ios-label-3 dark:text-ios-dlabel-3"
+            >
+              {abbr}
+            </p>
+          ))}
+          {weekDays.map(d => {
+            const active = selectedDay === d.name
+            return (
+              <button
+                key={d.name}
+                onClick={() => onSelect(d.name)}
+                className={`aspect-square rounded-ios flex flex-col items-center justify-center gap-0.5 transition-all active:scale-[0.96] ${
+                  active
+                    ? 'bg-tint-500 text-white shadow-tint-glow'
+                    : d.isPast
+                      ? 'ios-fill-3 text-ios-label-4 dark:text-ios-dlabel-4'
+                      : 'ios-fill-2 text-ios-label dark:text-ios-dlabel'
+                }`}
+              >
+                <span className={`text-title3 font-bold tabular-nums leading-none ${d.isToday && !active ? 'text-tint-500' : ''}`}>
+                  {d.dayNum}
+                </span>
+                <span className="text-caption2 opacity-70">
+                  {d.monthShort}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Full-name list below the grid */}
+        <div className="ios-card-flat overflow-hidden">
+          {weekDays.map(d => {
+            const active = selectedDay === d.name
+            return (
+              <button
+                key={d.name}
+                onClick={() => onSelect(d.name)}
+                className="w-full ios-list-row flex items-center gap-3 px-4 py-3 text-left"
+              >
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
+                  active ? 'bg-tint-500 text-white' : 'ios-fill-2 text-ios-label-2 dark:text-ios-dlabel-2'
+                }`}>
+                  <span className="text-caption1 font-bold tabular-nums">{d.dayNum}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-callout font-semibold leading-tight ${active ? 'text-tint-600 dark:text-tint-300' : 'text-ios-label dark:text-ios-dlabel'}`}>
+                    {d.name}
+                  </p>
+                  <p className="text-caption1 text-ios-label-3 dark:text-ios-dlabel-3 mt-0.5">
+                    {d.dayNum} de {d.monthLong}{d.isToday ? ' · hoje' : ''}
+                  </p>
+                </div>
+                {active && <Check size={16} strokeWidth={2.6} className="text-tint-500 shrink-0" />}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
+/* ─────────────────────── Confirmation modal ─────────────────────── */
+
+function ConfirmationModal({
+  aula, dia, kind, profNome, dayLabel, onClose, onConfirm,
+}: {
+  aula: Aula
+  dia: string
+  kind: 'book' | 'cancel' | 'waitlist'
+  profNome: string
+  dayLabel: string
+  onClose: () => void
+  onConfirm: () => void
+}) {
+  const booking  = getBookingDia(aula, dia)
+  const totalVag = Number(aula.vagasTotais) || 0
+  const accent   = modalidadeAccent(aula.modalidade)
+  const gradient = modalidadeGradient(aula.modalidade)
+
+  const copy = kind === 'book'
+    ? { title: 'Confirmar agendamento', confirm: 'Confirmar agendamento', confirmCls: 'ios-btn-primary' }
+    : kind === 'waitlist'
+      ? { title: 'Entrar na fila de espera?', confirm: 'Entrar na fila', confirmCls: 'ios-btn-tinted' }
+      : { title: 'Cancelar inscrição?', confirm: 'Cancelar inscrição', confirmCls: 'ios-btn-primary' }
+
+  const confirmStyle = kind === 'cancel'
+    ? { background: '#FF3B30', color: '#fff', boxShadow: '0 4px 14px rgba(255,59,48,0.32)' } as const
+    : undefined
+
+  return (
+    <Modal open onClose={onClose} title={copy.title}>
+      <div className="space-y-4">
+        {/* Hero card */}
+        <div className="ios-card-flat overflow-hidden">
+          <div className="h-1" style={{ background: gradient }} />
+          <div className="p-4 space-y-2.5">
+            <span
+              className="inline-flex items-center gap-1.5 text-caption1 font-bold px-2 py-0.5 rounded-full"
+              style={{ background: `${accent}18`, color: accent }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: accent }} />
+              {aula.modalidade}
+            </span>
+            <p className="text-title2 font-bold tabular-nums text-ios-label dark:text-ios-dlabel leading-none">
+              {aula.horario}
+            </p>
+            <p className="text-callout text-ios-label-2 dark:text-ios-dlabel-2">
+              {dayLabel}
+            </p>
+            <div className="pt-2 grid grid-cols-2 gap-2 text-caption1">
+              <div className="flex items-center gap-1.5 text-ios-label-2 dark:text-ios-dlabel-2">
+                <User size={12} className="opacity-70" />
+                <span className="truncate">{profNome}</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-ios-label-2 dark:text-ios-dlabel-2">
+                <UsersIcon size={12} className="opacity-70" />
+                <span className="tabular-nums">
+                  {booking.inscritos.length}/{totalVag} vagas
+                </span>
+              </div>
+            </div>
+            {kind === 'waitlist' && booking.filaEspera.length > 0 && (
+              <p className="text-caption1 text-sys-orange flex items-center gap-1 pt-1">
+                <Hourglass size={11} /> {booking.filaEspera.length} aluno{booking.filaEspera.length !== 1 ? 's' : ''} na fila
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Buttons */}
+        <div className="flex items-center gap-2">
+          <button onClick={onClose} className="flex-1 ios-btn-gray !py-3">
+            {kind === 'cancel' ? 'Voltar' : 'Cancelar'}
+          </button>
+          <button
+            onClick={onConfirm}
+            className={`flex-1 ${copy.confirmCls} !py-3`}
+            style={confirmStyle}
+          >
+            {copy.confirm}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
+/* ─────────────────────── Class details modal (week view) ─────────────────────── */
+
+function ClassDetailsModal({
+  aula, dia, userId, profNome, dayLabel, onClose, onBook, onCancel, onWaitlist,
+}: {
+  aula: Aula
+  dia: string
+  userId: string
+  profNome: string
+  dayLabel: string
+  onClose: () => void
+  onBook: () => void
+  onCancel: () => void
+  onWaitlist: () => void
+}) {
+  const booking  = getBookingDia(aula, dia)
+  const totalVag = Number(aula.vagasTotais) || 0
+  const vagas    = Math.max(0, totalVag - booking.inscritos.length)
+  const inscrito = isInscritoDia(aula, dia, userId)
+  const naFila   = isNaFilaDia(aula, dia, userId)
+  const full     = vagas <= 0 && !inscrito
+  const pct      = totalVag > 0 ? booking.inscritos.length / totalVag : 0
+  const accent   = modalidadeAccent(aula.modalidade)
+  const gradient = modalidadeGradient(aula.modalidade)
+
+  return (
+    <Modal open onClose={onClose} title="Detalhes da aula">
+      <div className="space-y-4">
+        <div className="ios-card-flat overflow-hidden">
+          <div className="h-1" style={{ background: gradient }} />
+          <div className="p-4 space-y-3">
+            <span
+              className="inline-flex items-center gap-1.5 text-caption1 font-bold px-2 py-0.5 rounded-full"
+              style={{ background: `${accent}18`, color: accent }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: accent }} />
+              {aula.modalidade}
+            </span>
+            <div>
+              <p className="text-title1 font-bold tabular-nums text-ios-label dark:text-ios-dlabel leading-none">
+                {aula.horario}
+              </p>
+              <p className="text-callout text-ios-label-2 dark:text-ios-dlabel-2 mt-1.5">
+                {dayLabel}
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-caption1 pt-1">
+              <div className="flex items-center gap-1.5 text-ios-label-2 dark:text-ios-dlabel-2">
+                <User size={12} className="opacity-70" />
+                <span className="truncate">{profNome}</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-ios-label-2 dark:text-ios-dlabel-2">
+                <UsersIcon size={12} className="opacity-70" />
+                <span className="tabular-nums">{booking.inscritos.length}/{totalVag} vagas</span>
+              </div>
+            </div>
+            <div className="h-[3px] rounded-full ios-fill-2 overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all"
+                style={{
+                  width: `${Math.min(pct * 100, 100)}%`,
+                  background: pct >= 1 ? '#FF3B30' : pct >= 0.8 ? '#FF9500' : '#34C759',
+                }}
+              />
+            </div>
+            {inscrito && (
+              <p className="text-caption1 text-sys-green flex items-center gap-1">
+                <Check size={11} strokeWidth={3} /> Você está inscrito nesta aula
+              </p>
+            )}
+            {naFila && (
+              <p className="text-caption1 text-sys-orange flex items-center gap-1">
+                <Hourglass size={11} /> Você está na fila de espera
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button onClick={onClose} className="flex-1 ios-btn-gray !py-3">
+            Fechar
+          </button>
+          {inscrito || naFila ? (
+            <button
+              onClick={onCancel}
+              className="flex-1 ios-btn-primary !py-3"
+              style={{ background: '#FF3B30', boxShadow: '0 4px 14px rgba(255,59,48,0.32)' }}
+            >
+              {inscrito ? 'Cancelar inscrição' : 'Sair da fila'}
+            </button>
+          ) : full ? (
+            <button onClick={onWaitlist} className="flex-1 ios-btn-tinted !py-3">
+              Entrar na fila
+            </button>
+          ) : (
+            <button onClick={onBook} className="flex-1 ios-btn-primary !py-3">
+              Agendar
+            </button>
+          )}
+        </div>
+      </div>
+    </Modal>
   )
 }

@@ -24,20 +24,20 @@ export const adminAulasTour: TourStep[] = [
 export const studentAulasTour: TourStep[] = [
   {
     target: 'student-filtros',
-    title: 'Filtros de aulas',
-    body: 'Use os filtros para encontrar aulas por modalidade, horário preferido ou professor específico.',
+    title: 'Filtre e ordene',
+    body: 'Filtre as aulas pela modalidade que você pratica e escolha como ordenar: por horário, vagas disponíveis, modalidade ou professor.',
     placement: 'bottom',
   },
   {
     target: 'student-dias',
-    title: 'Selecionar dia',
-    body: 'Escolha o dia da semana para ver as turmas disponíveis naquela data.',
+    title: 'Escolha o dia',
+    body: 'Toque no seletor de dia para abrir o calendário da semana e navegar entre dias com o nome completo e a data.',
     placement: 'bottom',
   },
   {
     target: 'student-aulas-list',
-    title: 'Aulas disponíveis',
-    body: 'Cada card mostra o professor, horário e vagas disponíveis. Clique em "Agendar" para reservar sua vaga ou entrar na fila de espera.',
+    title: 'Agende sua vaga',
+    body: 'As aulas são agrupadas por período (manhã, tarde, noite). Toque em "Agendar" para abrir o modal de confirmação com todos os detalhes antes de confirmar sua inscrição.',
     placement: 'top',
   },
 ]

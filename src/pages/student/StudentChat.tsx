@@ -33,9 +33,9 @@ export default function StudentChat() {
   /* Full-viewport chat — this page owns the entire main area and has exactly
      ONE internal scroll container (the messages list). Zero overflow on <main>. */
   return (
-    <div className="h-full flex flex-col page-container pt-4 md:pt-5 pb-3 md:pb-6">
-      {/* Compact header strip */}
-      <div className="mb-3 flex items-center justify-between gap-3 shrink-0">
+    <div className="h-full flex flex-col md:page-container md:pt-5 md:pb-6">
+      {/* Header hidden on mobile (chat is fullscreen) */}
+      <div className="hidden md:flex mb-3 items-center justify-between gap-3 shrink-0">
         <div>
           <h1 className="text-title2 md:text-title1 text-ios-label dark:text-ios-dlabel leading-none">Chat</h1>
           <p className="text-caption1 text-ios-label-2 dark:text-ios-dlabel-2 mt-1">
@@ -45,7 +45,7 @@ export default function StudentChat() {
       </div>
 
       <div
-        className="ios-card flex-1 min-h-0 flex flex-col overflow-hidden mx-auto w-full"
+        className="md:ios-card flex-1 min-h-0 flex flex-col overflow-hidden md:mx-auto w-full bg-white dark:bg-ios-dbg-elev"
         style={{ maxWidth: '880px' }}
       >
         {/* Partner header */}

@@ -1,8 +1,8 @@
 import type React from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import {
-  Dumbbell, LayoutDashboard, Calendar, CreditCard, Megaphone, MessageCircle,
-  CalendarDays, Users, Inbox, BarChart3, Settings2, Sun, Moon, WifiOff,
+  Dumbbell, LayoutDashboard, Calendar, Megaphone, MessageCircle,
+  CalendarDays, Users, Inbox, BarChart3, Settings2, Sun, Moon, WifiOff, User as UserIcon,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { TourProvider } from '../context/TourContext'
@@ -23,13 +23,13 @@ const studentNavDesktop: NavItem[] = [
   { to: '/chat', label: 'Chat', icon: MessageCircle },
 ]
 
-// Mobile bottom tabs still show carteirinha — it's useful on phone
+// Mobile bottom tabs — carteirinha vive dentro do perfil
 const studentTabsMobile: NavItem[] = [
   { to: '/', label: 'Início', icon: LayoutDashboard },
   { to: '/aulas', label: 'Aulas', icon: Calendar },
-  { to: '/carteirinha', label: 'Carteirinha', icon: CreditCard },
   { to: '/comunidade', label: 'Feed', icon: Megaphone },
   { to: '/chat', label: 'Chat', icon: MessageCircle },
+  { to: '/perfil', label: 'Perfil', icon: UserIcon },
 ]
 
 const adminNav: NavItem[] = [
@@ -53,7 +53,7 @@ const adminTabs: NavItem[] = [
 function pageTitle(pathname: string, isAdmin: boolean): string {
   const map: Record<string, string> = isAdmin
     ? { '/': 'Dashboard', '/aulas': 'Aulas', '/usuarios': 'Alunos', '/comunidade': 'Comunidade', '/mensagens': 'Mensagens', '/relatorios': 'Relatórios', '/configuracoes': 'Configurações' }
-    : { '/': 'Início', '/aulas': 'Aulas', '/carteirinha': 'Carteirinha', '/comunidade': 'Feed', '/chat': 'Chat' }
+    : { '/': 'Início', '/aulas': 'Aulas', '/carteirinha': 'Carteirinha', '/comunidade': 'Feed', '/chat': 'Chat', '/perfil': 'Perfil' }
   return map[pathname] ?? 'FitCore'
 }
 
