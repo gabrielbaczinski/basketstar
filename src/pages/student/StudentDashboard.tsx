@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   CalendarDays, ChevronRight, X, Megaphone, CreditCard,
-  MessageCircle, ArrowRight, Clock, TrendingUp, Flame, Hourglass,
+  MessageCircle, ArrowRight, Clock, TrendingUp, Flame, Hourglass, Repeat2,
 } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { useToast } from '../../context/ToastContext'
@@ -196,8 +196,11 @@ export default function StudentDashboard() {
                         <p className="text-footnote font-semibold leading-tight" style={{ color: accent }}>
                           {aula.modalidade}
                         </p>
-                        <p className="text-caption1 text-ios-label-2 dark:text-ios-dlabel-2 mt-0.5 truncate">
+                        <p className="text-caption1 text-ios-label-2 dark:text-ios-dlabel-2 mt-0.5 flex items-center gap-1 truncate">
                           {profNome(aula.professorId)}
+                          <span className="inline-flex items-center gap-0.5 text-caption2 text-ios-label-3 dark:text-ios-dlabel-3 shrink-0">
+                            <Repeat2 size={9} strokeWidth={2.5} /> toda semana
+                          </span>
                         </p>
                       </div>
                       <button
@@ -375,7 +378,7 @@ export default function StudentDashboard() {
         <p className="text-footnote text-ios-label-2 dark:text-ios-dlabel-2">
           {cancelPending?.isWaitlist
             ? `Deseja sair da fila de espera de ${cancelPending?.modalidade} — ${cancelPending?.dia}?`
-            : `Deseja cancelar ${cancelPending?.modalidade} — ${cancelPending?.dia}? Sua vaga poderá ser ocupada por outro aluno.`}
+            : `Deseja cancelar ${cancelPending?.modalidade} — ${cancelPending?.dia}? Esta é uma inscrição recorrente — você deixará de participar toda semana.`}
         </p>
       </Modal>
     </div>

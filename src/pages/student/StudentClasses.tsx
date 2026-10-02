@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import {
   ChevronLeft, ChevronRight, ChevronDown, Info, Clock, User, CalendarCheck,
   LayoutGrid, Tag, SlidersHorizontal, X, Check, Users as UsersIcon, Flame,
-  Hourglass, Calendar as CalendarIcon,
+  Hourglass, Calendar as CalendarIcon, Repeat2,
 } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import type { Aula, ModalidadeType } from '../../types'
@@ -135,7 +135,7 @@ function ClassCard({
 
   const statusChip = inscrito ? (
     <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-sys-green/14 text-sys-green text-caption2 font-bold rounded-full leading-none shrink-0 whitespace-nowrap">
-      <Check size={9} strokeWidth={3} /> Inscrito
+      <Check size={9} strokeWidth={3} /> Inscrito <Repeat2 size={9} strokeWidth={2.5} />
     </span>
   ) : naFila ? (
     <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-sys-orange/18 text-sys-orange text-caption2 font-bold rounded-full leading-none shrink-0 whitespace-nowrap">
@@ -477,7 +477,7 @@ export default function StudentClasses() {
       setFullModal({ aula, dia }); return
     }
     const res = bookClassDia(aulaId, dia)
-    if (res === 'booked') showToast(`${aula.modalidade} — ${dia} ${aula.horario} agendado.`, 'success')
+    if (res === 'booked') showToast(`${aula.modalidade} — ${dia} agendado · recorrente toda semana.`, 'success')
     else if (res === 'already_booked') showToast('Você já está inscrito neste horário.', 'info')
     else if (res === 'waitlisted') showToast('Você já está na fila de espera deste horário.', 'info')
     else if (res === 'inactive') showToast('Matrícula inativa. Procure a recepção para regularizar.', 'warning')

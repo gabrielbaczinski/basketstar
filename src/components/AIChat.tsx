@@ -388,7 +388,7 @@ export default function AIChat() {
       })
     }
     const texts: Record<string, string> = {
-      booked: `Agendado! Você está confirmado em ${opt.label.split('(')[0]?.trimEnd()}.`,
+      booked: `Agendada toda semana! Você está confirmado em ${opt.label.split('(')[0]?.trimEnd()} — inscrição recorrente.`,
       waitlisted: 'Você entrou na fila de espera. Será avisado quando uma vaga abrir.',
       already_booked: 'Você já está inscrito nessa aula.',
       conflict: 'Você já tem outra aula nesse horário.',
