@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react'
-import type { AppData, Usuario, Aula, Aviso, Mensagem, Configuracoes, AttendanceStatus } from '../types'
+import type { AppData, Usuario, Aula, Aviso, Mensagem, Configuracoes, AttendanceStatus, Professor } from '../types'
 import { loadData, saveData, getCurrentUserId, setCurrentUser, clearCurrentUser, resetAppData } from '../data/storage'
 import { getBookingDia } from '../utils/aulaUtils'
 
@@ -39,6 +39,7 @@ interface AppContextType {
   updateAula: (aula: Aula) => void
   addAula: (aula: Omit<Aula, 'id'>) => void
   deleteAula: (aulaId: string) => void
+  addProfessor: (nome: string) => Professor
   resetDemo: () => void
 }
 
@@ -332,6 +333,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     updateData(d => ({ ...d, aulas: d.aulas.filter(a => a.id !== aulaId) }))
   }, [updateData])
 
+  const addProfessor = useCallback((nome: string): Professor => {
+    const newProf: Professor = {
+      id: `p${Date.now()}${Math.random().toString(36).slice(2, 5)}`,
+      nome: nome.trim(),
+      modalidades: [],
+    }
+    updateData(d => ({ ...d, professores: [...d.professores, newProf] }))
+    return newProf
+  }, [updateData])
+
   const resetDemo = useCallback(() => {
     const fresh = resetAppData()
     setData(fresh)
@@ -345,7 +356,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       login, logout, toggleDark, setActiveView,
       bookClassDia, cancelClassDia, joinWaitlistDia,
       updateConfiguracoes, addAviso, deleteAviso, sendMensagem,
-      markAttendance, getAttendance, addUsuario, signupAndLogin, updateUsuarioStatus, updateAula, addAula, deleteAula,
+      markAttendance, getAttendance, addUsuario, signupAndLogin, updateUsuarioStatus, updateAula, addAula, deleteAula, addProfessor,
       resetDemo,
     }}>
       {children}

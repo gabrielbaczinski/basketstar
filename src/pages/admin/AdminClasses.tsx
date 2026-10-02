@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Pencil, ClipboardList, Check, X, Plus, Trash2, Upload, Download, AlertCircle } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
-import type { Aula, ModalidadeType } from '../../types'
+import type { Aula, ModalidadeType, Professor } from '../../types'
 import Badge, { modalidadeVariant } from '../../components/ui/Badge'
 import Modal from '../../components/ui/Modal'
 import OccupancyBar from '../../components/ui/OccupancyBar'
@@ -15,7 +15,7 @@ const DIAS_SEMANA = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'
 const DEFAULT_SUGGESTIONS: ModalidadeType[] = ['Pilates', 'Muay Thai', 'Spinning']
 
 export default function AdminClasses() {
-  const { data, updateAula, addAula, deleteAula, markAttendance, getAttendance } = useApp()
+  const { data, updateAula, addAula, deleteAula, markAttendance, getAttendance, addProfessor } = useApp()
   const { showToast } = useToast()
   const [editing, setEditing] = useState<Aula | null>(null)
   const [showNew, setShowNew] = useState(false)
@@ -227,6 +227,7 @@ export default function AdminClasses() {
           onSave={handleAddAula}
           professoresList={data.professores}
           sugestoes={modalidadesSuggestions}
+          onAddProfessor={addProfessor}
         />
       )}
 
@@ -239,6 +240,7 @@ export default function AdminClasses() {
           onDelete={handleDelete}
           professoresList={data.professores}
           sugestoes={modalidadesSuggestions}
+          onAddProfessor={addProfessor}
         />
       )}
 
@@ -383,11 +385,12 @@ interface EditModalProps {
   onClose: () => void
   onSave: (a: Aula) => void
   onDelete: (id: string) => void
-  professoresList: { id: string; nome: string; modalidades: string[] }[]
+  professoresList: Professor[]
   sugestoes: string[]
+  onAddProfessor: (nome: string) => Professor
 }
 
-function EditAulaModal({ aula, onClose, onSave, onDelete, professoresList, sugestoes }: EditModalProps) {
+function EditAulaModal({ aula, onClose, onSave, onDelete, professoresList, sugestoes, onAddProfessor }: EditModalProps) {
   const [state, setState] = useState<Aula>(aula)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [error, setError] = useState('')
@@ -484,14 +487,12 @@ function EditAulaModal({ aula, onClose, onSave, onDelete, professoresList, suges
           </datalist>
         </FieldLabel>
         <FieldLabel label="Professor">
-          <select
+          <ProfessorSelector
             value={state.professorId}
-            onChange={e => setState(s => ({ ...s, professorId: e.target.value }))}
-            className="ios-input"
-          >
-            {professoresList.length === 0 && <option value="" disabled>Nenhum professor cadastrado</option>}
-            {professoresList.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-          </select>
+            professoresList={professoresList}
+            onSelect={id => setState(s => ({ ...s, professorId: id }))}
+            onAdd={onAddProfessor}
+          />
         </FieldLabel>
         <FieldLabel label="Horário">
           <input
@@ -557,11 +558,12 @@ function EditAulaModal({ aula, onClose, onSave, onDelete, professoresList, suges
 interface NewModalProps {
   onClose: () => void
   onSave: (aula: Omit<Aula, 'id'>) => void
-  professoresList: { id: string; nome: string; modalidades: ModalidadeType[] }[]
+  professoresList: Professor[]
   sugestoes: string[]
+  onAddProfessor: (nome: string) => Professor
 }
 
-function NewAulaModal({ onClose, onSave, professoresList, sugestoes }: NewModalProps) {
+function NewAulaModal({ onClose, onSave, professoresList, sugestoes, onAddProfessor }: NewModalProps) {
   const [modalidade, setModalidade] = useState<ModalidadeType>('')
   const [professorId, setProfessorId] = useState(professoresList[0]?.id ?? '')
   const [horario, setHorario] = useState('07:00')
@@ -624,10 +626,12 @@ function NewAulaModal({ onClose, onSave, professoresList, sugestoes }: NewModalP
         </FieldLabel>
 
         <FieldLabel label="Professor">
-          <select value={professorId} onChange={e => setProfessorId(e.target.value)} className="ios-input">
-            {professoresList.length === 0 && <option value="" disabled>Nenhum professor cadastrado</option>}
-            {professoresList.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-          </select>
+          <ProfessorSelector
+            value={professorId}
+            professoresList={professoresList}
+            onSelect={setProfessorId}
+            onAdd={onAddProfessor}
+          />
         </FieldLabel>
 
         <FieldLabel label="Horário">
@@ -855,6 +859,95 @@ function CsvImportModal({ onClose, onImport, professoresList }: CsvModalProps) {
         )}
       </div>
     </Modal>
+  )
+}
+
+function ProfessorSelector({
+  value,
+  professoresList,
+  onSelect,
+  onAdd,
+}: {
+  value: string
+  professoresList: Professor[]
+  onSelect: (id: string) => void
+  onAdd: (nome: string) => Professor
+}) {
+  const [adding, setAdding] = useState(false)
+  const [newNome, setNewNome] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (adding) inputRef.current?.focus()
+  }, [adding])
+
+  const commit = () => {
+    const nome = newNome.trim()
+    if (!nome) return
+    const prof = onAdd(nome)
+    onSelect(prof.id)
+    setNewNome('')
+    setAdding(false)
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex gap-2 items-center">
+        <select value={value} onChange={e => onSelect(e.target.value)} className="ios-input flex-1 min-w-0">
+          {professoresList.length === 0 && (
+            <option value="" disabled>Nenhum — use + para adicionar</option>
+          )}
+          {professoresList.map(p => (
+            <option key={p.id} value={p.id}>{p.nome}</option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={() => { setAdding(a => !a); setNewNome('') }}
+          className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+            adding
+              ? 'brand-bg text-white'
+              : 'ios-fill-2 text-ios-label-2 dark:text-ios-dlabel-2 hover:ios-fill-1'
+          }`}
+          aria-label="Novo professor"
+        >
+          <Plus size={14} strokeWidth={2.6} />
+        </button>
+      </div>
+      {adding && (
+        <div className="flex gap-2 items-center">
+          <input
+            ref={inputRef}
+            type="text"
+            value={newNome}
+            onChange={e => setNewNome(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') commit()
+              if (e.key === 'Escape') { setAdding(false); setNewNome('') }
+            }}
+            placeholder="Nome completo do professor"
+            className="ios-input flex-1 min-w-0"
+          />
+          <button
+            type="button"
+            onClick={commit}
+            disabled={!newNome.trim()}
+            className="w-9 h-9 rounded-full bg-sys-green text-white flex items-center justify-center shrink-0 disabled:opacity-40 transition-opacity"
+            aria-label="Confirmar"
+          >
+            <Check size={14} strokeWidth={2.8} />
+          </button>
+          <button
+            type="button"
+            onClick={() => { setAdding(false); setNewNome('') }}
+            className="w-9 h-9 rounded-full ios-fill-2 text-ios-label-2 dark:text-ios-dlabel-2 flex items-center justify-center shrink-0"
+            aria-label="Cancelar"
+          >
+            <X size={14} strokeWidth={2.8} />
+          </button>
+        </div>
+      )}
+    </div>
   )
 }
 
