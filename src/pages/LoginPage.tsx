@@ -253,7 +253,8 @@ export default function LoginPage() {
           initialEmail={emailInput}
           onClose={() => setSignupOpen(false)}
           onSignup={(form) => {
-            signupAndLogin(form)
+            const result = signupAndLogin(form)
+            if (result === null) return
             setSignupOpen(false)
           }}
         />

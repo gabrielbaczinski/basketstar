@@ -34,7 +34,7 @@ interface AppContextType {
   markAttendance: (aulaId: string, userId: string, present: boolean, date?: string) => void
   getAttendance: (aulaId: string, date?: string) => Record<string, AttendanceStatus>
   addUsuario: (u: Omit<Usuario, 'id'>) => Usuario
-  signupAndLogin: (u: Omit<Usuario, 'id' | 'role' | 'statusPlano'>) => Usuario
+  signupAndLogin: (u: Omit<Usuario, 'id' | 'role' | 'statusPlano'>) => Usuario | null
   updateUsuarioStatus: (userId: string, status: 'Ativo' | 'Inativo') => void
   updateAula: (aula: Aula) => void
   addAula: (aula: Omit<Aula, 'id'>) => void
@@ -122,6 +122,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (classDow >= 0) {
           const daysUntil = classDow >= todayDow ? classDow - todayDow : 7 - (todayDow - classDow)
           if (daysUntil > limit) return 'too_far'
+          if (daysUntil === 0) {
+            const [h, m] = targetAula.horario.split(':').map(Number)
+            const now = new Date()
+            if (now.getHours() * 60 + now.getMinutes() >= (h ?? 0) * 60 + (m ?? 0)) return 'too_far'
+          }
         }
       }
     }
@@ -282,10 +287,34 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [updateData])
 
   const updateUsuarioStatus = useCallback((userId: string, status: 'Ativo' | 'Inativo') => {
-    updateData(d => ({ ...d, usuarios: d.usuarios.map(u => u.id === userId ? { ...u, statusPlano: status } : u) }))
+    updateData(d => {
+      const usuarios = d.usuarios.map(u => u.id === userId ? { ...u, statusPlano: status } : u)
+      if (status !== 'Inativo') return { ...d, usuarios }
+
+      const aulas = d.aulas.map(aula => ({
+        ...aula,
+        bookingsPorDia: Object.fromEntries(
+          Object.entries(aula.bookingsPorDia).map(([dia, b]) => {
+            const wasInscrito = b.inscritos.includes(userId)
+            let inscritos = b.inscritos.filter(id => id !== userId)
+            let filaEspera = b.filaEspera.filter(id => id !== userId)
+            if (wasInscrito && d.configuracoes.modoFilaEspera === 'AUTOMATICO' && filaEspera.length > 0) {
+              inscritos = [...inscritos, filaEspera[0]]
+              filaEspera = filaEspera.slice(1)
+            }
+            return [dia, { inscritos, filaEspera }]
+          })
+        ),
+      }))
+
+      return { ...d, usuarios, aulas }
+    })
   }, [updateData])
 
-  const signupAndLogin = useCallback((u: Omit<Usuario, 'id' | 'role' | 'statusPlano'>): Usuario => {
+  const signupAndLogin = useCallback((u: Omit<Usuario, 'id' | 'role' | 'statusPlano'>): Usuario | null => {
+    const emailNorm = u.email.trim().toLowerCase()
+    if (data.usuarios.some(usr => usr.email.toLowerCase() === emailNorm)) return null
+
     const newUser: Usuario = {
       ...u,
       id: `u${Date.now()}${Math.random().toString(36).slice(2, 6)}`,
@@ -298,7 +327,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setCurrentUserId(newUser.id)
     setActiveViewState('aluno')
     return newUser
-  }, [updateData])
+  }, [data.usuarios, updateData])
 
   const updateAula = useCallback((aula: Aula) => {
     updateData(d => {
