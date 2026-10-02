@@ -450,6 +450,14 @@ function EditAulaModal({ aula, onClose, onSave, onDelete, professoresList, suges
     if (!state.horario) { setError('Informe o horário.'); return }
     if (Number(state.vagasTotais) < 1) { setError('Vagas deve ser ≥ 1.'); return }
     if (state.diasSemana.length === 0) { setError('Selecione ao menos um dia.'); return }
+    const overCapacityDay = state.diasSemana.find(
+      dia => (state.bookingsPorDia[dia]?.inscritos.length ?? 0) > Number(state.vagasTotais),
+    )
+    if (overCapacityDay) {
+      const count = state.bookingsPorDia[overCapacityDay]?.inscritos.length ?? 0
+      setError(`Esta aula já tem ${count} inscritos em ${overCapacityDay}. A capacidade não pode ser menor que isso.`)
+      return
+    }
     // Clean bookings for removed days; initialise new days
     const cleanedBookings = { ...state.bookingsPorDia }
     Object.keys(cleanedBookings).forEach(dia => { if (!state.diasSemana.includes(dia)) delete cleanedBookings[dia] })
