@@ -1,9 +1,17 @@
 import { useMemo } from 'react'
 import { FileDown, FileSpreadsheet, TrendingUp, Users, BarChart2, Clock } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, CartesianGrid, AreaChart, Area } from 'recharts'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
+import * as XLSX from 'xlsx'
 import { useApp } from '../../context/AppContext'
 import { useToast } from '../../context/ToastContext'
 import { getMaxOcupados, getMediaOcupacaoPct } from '../../utils/aulaUtils'
+
+function hexToRgb(hex: string): [number, number, number] {
+  const n = hex.replace('#', '')
+  return [parseInt(n.slice(0, 2), 16), parseInt(n.slice(2, 4), 16), parseInt(n.slice(4, 6), 16)]
+}
 
 const TOOLTIP_STYLE = {
   borderRadius: 12,
@@ -56,8 +64,106 @@ export default function AdminReports() {
     return pcts.length > 0 ? Math.round((pcts.reduce((s, v) => s + v, 0) / pcts.length) * 100) : 0
   }, [data.aulas])
 
-  const exportPdf = () => showToast('Relatório PDF gerado (simulação).', 'success')
-  const exportExcel = () => showToast('Planilha Excel gerada (simulação).', 'success')
+  const exportPdf = () => {
+    const doc = new jsPDF()
+    const dateStr = new Date().toLocaleDateString('pt-BR')
+    const color = hexToRgb(brandColor.startsWith('#') ? brandColor : '#E55A2B')
+
+    doc.setFontSize(18)
+    doc.setTextColor(40, 40, 40)
+    doc.text('FitCore — Relatório de Ocupação', 14, 18)
+    doc.setFontSize(10)
+    doc.setTextColor(120, 120, 128)
+    doc.text(`Gerado em ${dateStr}`, 14, 25)
+
+    autoTable(doc, {
+      startY: 32,
+      head: [['Indicador', 'Valor']],
+      body: [
+        ['Total de aulas', String(data.aulas.length)],
+        ['Total de inscrições', String(totalInscritos)],
+        ['Ocupação média', `${mediaOcupacao}%`],
+        ['Horário de pico', picoPeak],
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: color },
+    })
+
+    let y = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10
+    doc.setFontSize(12)
+    doc.setTextColor(40, 40, 40)
+    doc.text('Ocupação por Aula', 14, y)
+    autoTable(doc, {
+      startY: y + 4,
+      head: [['Aula', 'Ocupação (%)']],
+      body: occByClass.map(r => [r.aula, `${r.ocupacao}%`]),
+      theme: 'striped',
+      headStyles: { fillColor: color },
+    })
+
+    y = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10
+    doc.setFontSize(12)
+    doc.text('Modalidades', 14, y)
+    autoTable(doc, {
+      startY: y + 4,
+      head: [['Modalidade', 'Inscrições']],
+      body: modShare.map(r => [r.name, String(r.value)]),
+      theme: 'striped',
+      headStyles: { fillColor: color },
+    })
+
+    y = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10
+    doc.setFontSize(12)
+    doc.text('Horários de Pico', 14, y)
+    autoTable(doc, {
+      startY: y + 4,
+      head: [['Horário', 'Alunos']],
+      body: peakHours.map(r => [r.hora, String(r.alunos)]),
+      theme: 'striped',
+      headStyles: { fillColor: color },
+    })
+
+    doc.save(`fitcore-relatorio-${dateStr.replace(/\//g, '-')}.pdf`)
+    showToast('Relatório PDF gerado com sucesso.', 'success')
+  }
+
+  const exportExcel = () => {
+    const dateStr = new Date().toLocaleDateString('pt-BR')
+    const wb = XLSX.utils.book_new()
+
+    const resumo = XLSX.utils.aoa_to_sheet([
+      ['FitCore — Relatório de Ocupação'],
+      [`Gerado em ${dateStr}`],
+      [],
+      ['Indicador', 'Valor'],
+      ['Total de aulas', data.aulas.length],
+      ['Total de inscrições', totalInscritos],
+      ['Ocupação média (%)', mediaOcupacao],
+      ['Horário de pico', picoPeak],
+    ])
+    XLSX.utils.book_append_sheet(wb, resumo, 'Resumo')
+
+    const ocupSheet = XLSX.utils.aoa_to_sheet([
+      ['Aula', 'Ocupação (%)'],
+      ...occByClass.map(r => [r.aula, r.ocupacao]),
+    ])
+    XLSX.utils.book_append_sheet(wb, ocupSheet, 'Ocupação')
+
+    const modSheet = XLSX.utils.aoa_to_sheet([
+      ['Modalidade', 'Inscrições'],
+      ...modShare.map(r => [r.name, r.value]),
+    ])
+    XLSX.utils.book_append_sheet(wb, modSheet, 'Modalidades')
+
+    const picoSheet = XLSX.utils.aoa_to_sheet([
+      ['Horário', 'Alunos'],
+      ...peakHours.map(r => [r.hora, r.alunos]),
+    ])
+    XLSX.utils.book_append_sheet(wb, picoSheet, 'Horários de Pico')
+
+    XLSX.writeFile(wb, `fitcore-relatorio-${dateStr.replace(/\//g, '-')}.xlsx`)
+    showToast('Planilha Excel gerada com sucesso.', 'success')
+  }
 
   return (
     <div className="page-container pt-4 md:pt-5 pb-6 space-y-4">
