@@ -15,8 +15,10 @@ const DIAS_SEMANA = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'
 const DEFAULT_SUGGESTIONS: ModalidadeType[] = ['Pilates', 'Muay Thai', 'Spinning']
 
 export default function AdminClasses() {
-  const { data, updateAula, addAula, deleteAula, markAttendance, getAttendance, addProfessor } = useApp()
+  const { data, updateAula, addAula, deleteAula, markAttendance, getAttendance, addProfessor, updateProfessor, deleteProfessor } = useApp()
   const { showToast } = useToast()
+  const [tab, setTab] = useState<'aulas' | 'professores'>('aulas')
+  const [showNewProf, setShowNewProf] = useState(false)
   const [editing, setEditing] = useState<Aula | null>(null)
   const [showNew, setShowNew] = useState(false)
   const [showCsv, setShowCsv] = useState(false)
@@ -104,22 +106,57 @@ export default function AdminClasses() {
 
   return (
     <div className="page-container pt-4 md:pt-5 pb-6 space-y-4">
-      <div className="flex items-end justify-between gap-4 flex-wrap">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-title2 md:text-title1 text-ios-label dark:text-ios-dlabel leading-none">Gestão de aulas</h1>
           <p className="text-caption1 text-ios-label-2 dark:text-ios-dlabel-2 mt-1">
             Edite vagas, professores e registre presenças
           </p>
+          <div className="flex gap-1 mt-3">
+            {(['aulas', 'professores'] as const).map(t => (
+              <button
+                key={t}
+                onClick={() => { setTab(t); setShowNewProf(false) }}
+                className={`px-4 py-1.5 rounded-full text-footnote font-semibold transition-colors capitalize ${
+                  tab === t ? 'brand-bg text-white' : 'ios-fill-2 text-ios-label-2 dark:text-ios-dlabel-2 hover:ios-fill-1'
+                }`}
+              >
+                {t === 'professores' ? `Professores · ${data.professores.length}` : 'Aulas'}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <button data-tour="admin-importar-csv" onClick={() => setShowCsv(true)} className="ios-btn-gray">
-            <Upload size={14} /> Importar CSV
-          </button>
-          <button data-tour="admin-nova-aula" onClick={() => setShowNew(true)} className="ios-btn-primary">
-            <Plus size={15} strokeWidth={2.6} /> Nova aula
-          </button>
+          {tab === 'aulas' ? (
+            <>
+              <button data-tour="admin-importar-csv" onClick={() => setShowCsv(true)} className="ios-btn-gray">
+                <Upload size={14} /> Importar CSV
+              </button>
+              <button data-tour="admin-nova-aula" onClick={() => setShowNew(true)} className="ios-btn-primary">
+                <Plus size={15} strokeWidth={2.6} /> Nova aula
+              </button>
+            </>
+          ) : (
+            <button onClick={() => setShowNewProf(true)} className="ios-btn-primary">
+              <Plus size={15} strokeWidth={2.6} /> Novo professor
+            </button>
+          )}
         </div>
       </div>
+
+      {tab === 'professores' && (
+        <ProfessoresList
+          professores={data.professores}
+          aulas={data.aulas}
+          onUpdate={updateProfessor}
+          onDelete={deleteProfessor}
+          showAdd={showNewProf}
+          onAddDone={() => setShowNewProf(false)}
+          onAdd={addProfessor}
+        />
+      )}
+
+      {tab === 'aulas' && (<>
 
       {/* Desktop table */}
       <div data-tour="admin-aulas-table" className="hidden md:block ios-card overflow-hidden">
@@ -214,6 +251,8 @@ export default function AdminClasses() {
           </div>
         ))}
       </div>
+
+      </>)}
 
       {/* CSV import modal */}
       {showCsv && (
@@ -859,6 +898,138 @@ function CsvImportModal({ onClose, onImport, professoresList }: CsvModalProps) {
         )}
       </div>
     </Modal>
+  )
+}
+
+interface ProfessoresListProps {
+  professores: Professor[]
+  aulas: Aula[]
+  onUpdate: (prof: Professor) => void
+  onDelete: (profId: string) => void
+  showAdd: boolean
+  onAddDone: () => void
+  onAdd: (nome: string) => Professor
+}
+
+function ProfessoresList({ professores, aulas, onUpdate, onDelete, showAdd, onAddDone, onAdd }: ProfessoresListProps) {
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editNome, setEditNome] = useState('')
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [newNome, setNewNome] = useState('')
+  const addInputRef = useRef<HTMLInputElement>(null)
+  const editInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => { if (showAdd) { setNewNome(''); setTimeout(() => addInputRef.current?.focus(), 50) } }, [showAdd])
+  useEffect(() => { if (editingId) editInputRef.current?.focus() }, [editingId])
+
+  const classesDe = (profId: string) => aulas.filter(a => a.professorId === profId)
+
+  const commitEdit = (prof: Professor) => {
+    const nome = editNome.trim()
+    if (nome && nome !== prof.nome) onUpdate({ ...prof, nome })
+    setEditingId(null)
+  }
+
+  const commitAdd = () => {
+    const nome = newNome.trim()
+    if (!nome) return
+    onAdd(nome)
+    onAddDone()
+  }
+
+  return (
+    <div className="space-y-3">
+      {showAdd && (
+        <div className="ios-card px-4 py-3 flex gap-2 items-center">
+          <input
+            ref={addInputRef}
+            type="text"
+            value={newNome}
+            onChange={e => setNewNome(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') commitAdd(); if (e.key === 'Escape') onAddDone() }}
+            placeholder="Nome completo do professor"
+            className="ios-input flex-1 min-w-0"
+          />
+          <button onClick={commitAdd} disabled={!newNome.trim()} className="w-9 h-9 rounded-full bg-sys-green text-white flex items-center justify-center shrink-0 disabled:opacity-40" aria-label="Confirmar">
+            <Check size={14} strokeWidth={2.8} />
+          </button>
+          <button onClick={onAddDone} className="w-9 h-9 rounded-full ios-fill-2 text-ios-label-2 dark:text-ios-dlabel-2 flex items-center justify-center shrink-0" aria-label="Cancelar">
+            <X size={14} strokeWidth={2.8} />
+          </button>
+        </div>
+      )}
+
+      <div className="ios-card overflow-hidden">
+        {professores.length === 0 && !showAdd && (
+          <p className="p-8 text-center text-footnote text-ios-label-3 dark:text-ios-dlabel-3">
+            Nenhum professor cadastrado. Clique em <strong>+ Novo professor</strong> para começar.
+          </p>
+        )}
+        {professores.map((prof, idx) => {
+          const classes = classesDe(prof.id)
+          const mods = Array.from(new Set(classes.map(a => a.modalidade)))
+          const isEditing = editingId === prof.id
+          const isConfirming = confirmDeleteId === prof.id
+
+          return (
+            <div key={prof.id} className={`flex items-center gap-3 px-4 py-3 ${idx > 0 ? 'hairline-t' : ''}`}>
+              <Avatar name={prof.nome} size="sm" />
+              <div className="flex-1 min-w-0">
+                {isEditing ? (
+                  <div className="flex gap-2 items-center">
+                    <input
+                      ref={editInputRef}
+                      value={editNome}
+                      onChange={e => setEditNome(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') commitEdit(prof); if (e.key === 'Escape') setEditingId(null) }}
+                      className="ios-input flex-1 min-w-0 !py-1.5"
+                    />
+                    <button onClick={() => commitEdit(prof)} className="w-8 h-8 rounded-full bg-sys-green text-white flex items-center justify-center shrink-0" aria-label="Salvar">
+                      <Check size={13} strokeWidth={2.8} />
+                    </button>
+                    <button onClick={() => setEditingId(null)} className="w-8 h-8 rounded-full ios-fill-2 text-ios-label-2 dark:text-ios-dlabel-2 flex items-center justify-center shrink-0" aria-label="Cancelar">
+                      <X size={13} strokeWidth={2.8} />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-callout font-semibold text-ios-label dark:text-ios-dlabel truncate">{prof.nome}</p>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {mods.length > 0
+                        ? mods.map(m => <Badge key={m} variant={modalidadeVariant(m as ModalidadeType)}>{m}</Badge>)
+                        : <span className="text-caption2 text-ios-label-3 dark:text-ios-dlabel-3">Sem aulas atribuídas</span>
+                      }
+                    </div>
+                  </>
+                )}
+              </div>
+              {!isEditing && (
+                <div className="flex items-center gap-1 shrink-0">
+                  {isConfirming ? (
+                    <>
+                      <span className="text-caption2 text-sys-red font-semibold mr-1 hidden sm:inline">
+                        {classes.length > 0 ? `${classes.length} aula(s) ficarão sem professor.` : 'Excluir?'}
+                      </span>
+                      <button onClick={() => { onDelete(prof.id); setConfirmDeleteId(null) }} className="px-2.5 py-1 rounded-full bg-sys-red text-white text-caption2 font-semibold">Excluir</button>
+                      <button onClick={() => setConfirmDeleteId(null)} className="px-2.5 py-1 rounded-full ios-fill-2 text-ios-label-2 dark:text-ios-dlabel-2 text-caption2 font-semibold">Cancelar</button>
+                    </>
+                  ) : (
+                    <>
+                      <button onClick={() => { setEditingId(prof.id); setEditNome(prof.nome); setConfirmDeleteId(null) }} className="text-ios-label-2 dark:text-ios-dlabel-2 hover:bg-ios-fill-2 p-2 rounded-full transition-colors" aria-label="Editar">
+                        <Pencil size={13} />
+                      </button>
+                      <button onClick={() => setConfirmDeleteId(prof.id)} className="text-sys-red hover:bg-sys-red/10 p-2 rounded-full transition-colors" aria-label="Excluir">
+                        <Trash2 size={13} />
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 

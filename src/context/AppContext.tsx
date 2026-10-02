@@ -40,6 +40,8 @@ interface AppContextType {
   addAula: (aula: Omit<Aula, 'id'>) => void
   deleteAula: (aulaId: string) => void
   addProfessor: (nome: string) => Professor
+  updateProfessor: (prof: Professor) => void
+  deleteProfessor: (profId: string) => void
   resetDemo: () => void
 }
 
@@ -343,6 +345,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return newProf
   }, [updateData])
 
+  const updateProfessor = useCallback((prof: Professor) => {
+    updateData(d => ({ ...d, professores: d.professores.map(p => p.id === prof.id ? prof : p) }))
+  }, [updateData])
+
+  const deleteProfessor = useCallback((profId: string) => {
+    updateData(d => ({
+      ...d,
+      professores: d.professores.filter(p => p.id !== profId),
+      aulas: d.aulas.map(a => a.professorId === profId ? { ...a, professorId: '' } : a),
+    }))
+  }, [updateData])
+
   const resetDemo = useCallback(() => {
     const fresh = resetAppData()
     setData(fresh)
@@ -356,7 +370,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       login, logout, toggleDark, setActiveView,
       bookClassDia, cancelClassDia, joinWaitlistDia,
       updateConfiguracoes, addAviso, deleteAviso, sendMensagem,
-      markAttendance, getAttendance, addUsuario, signupAndLogin, updateUsuarioStatus, updateAula, addAula, deleteAula, addProfessor,
+      markAttendance, getAttendance, addUsuario, signupAndLogin, updateUsuarioStatus, updateAula, addAula, deleteAula, addProfessor, updateProfessor, deleteProfessor,
       resetDemo,
     }}>
       {children}
