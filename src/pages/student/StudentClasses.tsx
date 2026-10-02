@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, useEffect } from 'react'
+import { useMemo, useState } from 'react'
 import {
   ChevronLeft, ChevronRight, ChevronDown, Info, Clock, User, CalendarCheck,
   LayoutGrid, Tag, SlidersHorizontal, X, Check, Users as UsersIcon, Flame,
@@ -57,73 +57,34 @@ function sortByHorario(aulas: Aula[]) {
   return [...aulas].sort((a, b) => a.horario.localeCompare(b.horario))
 }
 
-/* ───────────────────────────── Pill dropdown ───────────────────────────── */
+/* ───────────────────────────── Filter select (native) ───────────────────────────── */
 
 interface Option { value: string; label: string }
 
-function PillSelect({
-  icon, label, value, options, onChange, active,
+function FilterSelect({
+  value, onChange, options, active,
 }: {
-  icon?: React.ReactNode
-  label: string
   value: string
-  options: Option[]
   onChange: (v: string) => void
+  options: Option[]
   active: boolean
 }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', onDoc)
-    return () => document.removeEventListener('mousedown', onDoc)
-  }, [open])
-
-  const selected = options.find(o => o.value === value)
-  const display = active && selected ? selected.label : label
-
   return (
-    <div ref={ref} className="relative shrink-0">
-      <button
-        onClick={() => setOpen(o => !o)}
-        className={`inline-flex items-center gap-1.5 pl-3 pr-2.5 py-1.5 rounded-full text-caption1 font-semibold transition-all active:scale-[0.97] ${
-          active
-            ? 'bg-tint-500 text-white shadow-tint-glow'
-            : 'ios-fill-2 text-ios-label dark:text-ios-dlabel hover:ios-fill-1'
-        }`}
+    <div className={`relative shrink-0 rounded-full transition-all ${active ? 'bg-tint-500/10 ring-1 ring-tint-500' : 'ios-fill-2'}`}>
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className="appearance-none pl-3 pr-7 py-1.5 text-caption1 font-semibold bg-transparent border-none outline-none cursor-pointer text-ios-label dark:text-ios-dlabel"
       >
-        {icon && <span className="opacity-80 shrink-0">{icon}</span>}
-        <span className="truncate max-w-[160px]">{display}</span>
-        <ChevronDown size={11} strokeWidth={2.5} className={`shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
-      </button>
-      {open && (
-        <div
-          className="absolute z-30 top-full mt-1.5 min-w-[180px] max-h-[280px] overflow-y-auto bg-white dark:bg-ios-dbg-tert rounded-ios-md shadow-ios-4 py-1 animate-scale-in origin-top-left"
-          style={{ left: 0 }}
-        >
-          {options.map(opt => {
-            const isSel = opt.value === value
-            return (
-              <button
-                key={opt.value}
-                onClick={() => { onChange(opt.value); setOpen(false) }}
-                className={`w-full flex items-center justify-between gap-3 px-3.5 py-2.5 text-callout text-left transition-colors ${
-                  isSel
-                    ? 'text-tint-600 dark:text-tint-300'
-                    : 'text-ios-label dark:text-ios-dlabel hover:bg-ios-fill-3 dark:hover:bg-white/5'
-                }`}
-              >
-                <span className="truncate">{opt.label}</span>
-                {isSel && <Check size={15} strokeWidth={2.6} className="shrink-0" />}
-              </button>
-            )
-          })}
-        </div>
-      )}
+        {options.map(o => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
+      <ChevronDown
+        size={11}
+        strokeWidth={2.5}
+        className={`absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none ${active ? 'text-tint-500' : 'text-ios-label-2 dark:text-ios-dlabel-2'}`}
+      />
     </div>
   )
 }
@@ -194,7 +155,7 @@ function ClassCard({
 
   return (
     <article
-      className="group relative ios-card overflow-hidden transition-all hover:shadow-ios-3 sm:hover:-translate-y-0.5"
+      className="group relative ios-card overflow-hidden transition-all hover:shadow-ios-3 sm:hover:-translate-y-0.5 border-l-[3px] border-l-[3px] brand-border-l"
       style={{ boxShadow: ringShadow }}
     >
       {/* Top accent strip */}
@@ -204,7 +165,7 @@ function ClassCard({
       <div className="sm:hidden flex items-center gap-3 p-3 min-w-0">
         {/* Time + day block */}
         <div className="shrink-0 w-[64px]">
-          <p className="text-[22px] font-bold tabular-nums text-ios-label dark:text-ios-dlabel leading-none tracking-tight">
+          <p className="text-footnote font-semibold tabular-nums text-ios-label-2 dark:text-ios-dlabel-2 leading-none">
             {aula.horario}
           </p>
           <p className="text-caption2 font-semibold text-ios-label-3 dark:text-ios-dlabel-3 mt-0.5 truncate">
@@ -214,7 +175,7 @@ function ClassCard({
         {/* Middle: modality + professor + inline count */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 min-w-0">
-            <span className="text-footnote font-semibold tracking-tight truncate" style={{ color: accent }}>
+            <span className="text-callout font-bold tracking-tight truncate" style={{ color: accent }}>
               {aula.modalidade}
             </span>
             {statusChip}
@@ -250,15 +211,15 @@ function ClassCard({
       <div className="hidden sm:flex sm:flex-col p-3.5 gap-2.5 min-h-[172px]">
         {/* Row 1 — modality + status */}
         <div className="flex items-center justify-between gap-2 min-w-0">
-          <span className="text-footnote font-semibold tracking-tight truncate min-w-0" style={{ color: accent }}>
+          <span className="text-callout font-bold tracking-tight truncate min-w-0" style={{ color: accent }}>
             {aula.modalidade}
           </span>
           {statusChip}
         </div>
 
-        {/* Row 2 — Big time */}
+        {/* Row 2 — time (secondary) */}
         <div className="flex items-baseline gap-2 min-w-0">
-          <p className="text-[26px] font-bold tabular-nums text-ios-label dark:text-ios-dlabel leading-none tracking-tight">
+          <p className="text-subhead font-semibold tabular-nums text-ios-label-2 dark:text-ios-dlabel-2 leading-none">
             {aula.horario}
           </p>
           <span className="text-caption2 font-semibold text-ios-label-3 dark:text-ios-dlabel-3 truncate">
@@ -350,6 +311,102 @@ function WeekMiniCard({
   )
 }
 
+/* ─────────────────────── Desktop list row (day view) ─────────────────────── */
+
+function DesktopListRow({
+  aula, dia, userId, profNome, onBook, onCancel, onFullClick,
+}: {
+  aula: Aula; dia: string; userId: string; profNome: string
+  onBook: () => void; onCancel: () => void; onFullClick: () => void
+}) {
+  const booking  = getBookingDia(aula, dia)
+  const totalVag = Number(aula.vagasTotais) || 0
+  const vagas    = Math.max(0, totalVag - booking.inscritos.length)
+  const inscrito = isInscritoDia(aula, dia, userId)
+  const naFila   = isNaFilaDia(aula, dia, userId)
+  const full     = vagas <= 0 && !inscrito
+  const pct      = totalVag > 0 ? booking.inscritos.length / totalVag : 0
+  const accent   = modalidadeAccent(aula.modalidade)
+  const trending = pct >= 0.75 && pct < 1
+  const filaPos  = naFila ? booking.filaEspera.indexOf(userId) + 1 : 0
+
+  const statusChip = inscrito ? (
+    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-sys-green/14 text-sys-green text-caption2 font-bold rounded-full leading-none whitespace-nowrap">
+      <Check size={9} strokeWidth={3} /> Inscrito
+    </span>
+  ) : naFila ? (
+    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-sys-orange/18 text-sys-orange text-caption2 font-bold rounded-full leading-none whitespace-nowrap">
+      <Hourglass size={9} strokeWidth={2.6} /> Fila {filaPos}º
+    </span>
+  ) : trending ? (
+    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-sys-orange/14 text-sys-orange text-caption2 font-bold rounded-full leading-none whitespace-nowrap">
+      <Flame size={9} strokeWidth={2.6} /> Alta
+    </span>
+  ) : null
+
+  const actionBtn = inscrito ? (
+    <button onClick={onCancel} className="text-caption1 font-semibold text-sys-red hover:bg-sys-red/10 px-3 py-1.5 rounded-full transition-colors whitespace-nowrap">
+      Cancelar
+    </button>
+  ) : naFila ? (
+    <button onClick={onCancel} className="text-caption1 font-semibold text-sys-orange hover:bg-sys-orange/10 px-3 py-1.5 rounded-full transition-colors whitespace-nowrap">
+      Sair da fila
+    </button>
+  ) : full ? (
+    <button onClick={onFullClick} className="ios-btn-gray !py-1.5 !text-caption1 !px-3 whitespace-nowrap">
+      Fila de espera
+    </button>
+  ) : (
+    <button onClick={onBook} className="ios-btn-primary !py-1.5 !text-caption1 !px-3 whitespace-nowrap">
+      Agendar
+    </button>
+  )
+
+  const leftAccent = inscrito ? accent : naFila ? '#FF9500' : 'var(--brand)'
+
+  return (
+    <article
+      className="ios-list-row flex items-center gap-4 px-4 py-3 min-h-[52px] hover:bg-ios-fill-3 dark:hover:bg-white/[0.04] transition-colors"
+      style={{ boxShadow: `inset 3px 0 0 ${leftAccent}` }}
+    >
+      {/* Modalidade */}
+      <div className="w-36 shrink-0 min-w-0">
+        <p className="text-callout font-bold truncate" style={{ color: accent }}>{aula.modalidade}</p>
+      </div>
+      {/* Horário */}
+      <div className="w-14 shrink-0">
+        <p className="text-footnote font-semibold tabular-nums text-ios-label dark:text-ios-dlabel">{aula.horario}</p>
+      </div>
+      {/* Professor */}
+      <div className="flex-1 min-w-0">
+        <p className="text-caption1 text-ios-label-2 dark:text-ios-dlabel-2 flex items-center gap-1 truncate">
+          <User size={11} className="opacity-70 shrink-0" />
+          <span className="truncate">{profNome}</span>
+        </p>
+      </div>
+      {/* Ocupação */}
+      <div className="w-36 shrink-0 space-y-1">
+        <div className="flex items-center justify-between text-caption2 tabular-nums">
+          <span className="flex items-center gap-1 text-ios-label-3 dark:text-ios-dlabel-3">
+            <UsersIcon size={10} className="opacity-70" /> {booking.inscritos.length}/{totalVag}
+          </span>
+          <span className={`font-semibold ${full ? 'text-sys-red' : vagas <= 3 ? 'text-sys-orange' : 'text-ios-label-3 dark:text-ios-dlabel-3'}`}>
+            {full ? 'Lotada' : `${vagas} vaga${vagas !== 1 ? 's' : ''}`}
+          </span>
+        </div>
+        <div className="h-[3px] rounded-full ios-fill-2 overflow-hidden">
+          <div className="h-full rounded-full" style={{ width: `${Math.min(pct * 100, 100)}%`, background: pct >= 1 ? '#FF3B30' : pct >= 0.8 ? '#FF9500' : '#34C759' }} />
+        </div>
+      </div>
+      {/* Status + Ação */}
+      <div className="shrink-0 flex items-center gap-2 min-w-[200px] justify-end">
+        {statusChip}
+        {actionBtn}
+      </div>
+    </article>
+  )
+}
+
 /* ───────────────────────────── Main Page ───────────────────────────── */
 
 const SegBtn = ({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) => (
@@ -424,12 +481,19 @@ export default function StudentClasses() {
     else if (res === 'already_booked') showToast('Você já está inscrito neste horário.', 'info')
     else if (res === 'waitlisted') showToast('Você já está na fila de espera deste horário.', 'info')
     else if (res === 'inactive') showToast('Matrícula inativa. Procure a recepção para regularizar.', 'warning')
+    else if (res === 'conflict') showToast('Você já tem outra aula neste mesmo horário.', 'warning')
     else if (res === 'full') setFullModal({ aula, dia })
   }
 
   const handleCancel = (aulaId: string, dia: string) => {
     const aula = data.aulas.find(a => a.id === aulaId)!
-    if (cancelClassDia(aulaId, dia)) showToast(`${aula.modalidade} — ${dia} cancelada.`, 'warning')
+    const res = cancelClassDia(aulaId, dia)
+    if (res === 'ok') showToast(`${aula.modalidade} — ${dia} cancelada.`, 'warning')
+    else if (res === 'removed_from_waitlist') showToast(`Saiu da fila de ${aula.modalidade} — ${dia}.`, 'info')
+    else if (res === 'too_late') showToast(
+      `Prazo encerrado — cancelamentos até ${data.configuracoes.tempoLimiteCancelamentoMinutos} min antes da aula.`,
+      'warning',
+    )
   }
 
   const handleWaitlist = (aulaId: string, dia: string) => {
@@ -496,7 +560,7 @@ export default function StudentClasses() {
             <LayoutGrid size={12} strokeWidth={2.2} /> Semana
           </SegBtn>
           <SegBtn active={view === 'tipo'} onClick={() => setView('tipo')}>
-            <Tag size={12} strokeWidth={2.2} /> Tipo
+            <Tag size={12} strokeWidth={2.2} /> Por aulas
           </SegBtn>
         </div>
       </div>
@@ -536,36 +600,30 @@ export default function StudentClasses() {
             data-tour="student-filtros"
             className="flex items-center gap-1.5 overflow-x-auto no-scrollbar flex-1 min-w-0"
           >
-            <PillSelect
-              icon={<Tag size={11} strokeWidth={2.4} />}
-              label="Modalidade"
+            <FilterSelect
               value={filterMod}
               onChange={v => setFilterMod(v as 'Todas' | ModalidadeType)}
               active={filterMod !== 'Todas'}
               options={[
-                { value: 'Todas', label: 'Todas as modalidades' },
+                { value: 'Todas', label: 'Modalidade' },
                 ...modalidadesOpts.map(m => ({ value: m, label: m })),
               ]}
             />
-            <PillSelect
-              icon={<Clock size={11} strokeWidth={2.4} />}
-              label="Horário"
+            <FilterSelect
               value={filterHorario}
               onChange={setFilterHorario}
               active={filterHorario !== 'Todos'}
               options={[
-                { value: 'Todos', label: 'Qualquer horário' },
+                { value: 'Todos', label: 'Horário' },
                 ...horariosOpts.map(h => ({ value: h, label: h })),
               ]}
             />
-            <PillSelect
-              icon={<User size={11} strokeWidth={2.4} />}
-              label="Professor"
+            <FilterSelect
               value={filterProf}
               onChange={setFilterProf}
               active={filterProf !== 'Todos'}
               options={[
-                { value: 'Todos', label: 'Qualquer professor' },
+                { value: 'Todos', label: 'Professor' },
                 ...profsOpts.map(p => ({ value: p.id, label: p.nome })),
               ]}
             />
@@ -585,25 +643,21 @@ export default function StudentClasses() {
           data-tour="student-filtros"
           className="mb-3 flex items-center gap-1.5 overflow-x-auto no-scrollbar"
         >
-          <PillSelect
-            icon={<Tag size={11} strokeWidth={2.4} />}
-            label="Modalidade"
+          <FilterSelect
             value={filterMod}
             onChange={v => setFilterMod(v as 'Todas' | ModalidadeType)}
             active={filterMod !== 'Todas'}
             options={[
-              { value: 'Todas', label: 'Todas as modalidades' },
+              { value: 'Todas', label: 'Modalidade' },
               ...modalidadesOpts.map(m => ({ value: m, label: m })),
             ]}
           />
-          <PillSelect
-            icon={<User size={11} strokeWidth={2.4} />}
-            label="Professor"
+          <FilterSelect
             value={filterProf}
             onChange={setFilterProf}
             active={filterProf !== 'Todos'}
             options={[
-              { value: 'Todos', label: 'Qualquer professor' },
+              { value: 'Todos', label: 'Professor' },
               ...profsOpts.map(p => ({ value: p.id, label: p.nome })),
             ]}
           />
@@ -651,7 +705,7 @@ export default function StudentClasses() {
                   onClick={() => { setSelectedDay(d.name); if (view === 'semana') setView('dia') }}
                   className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full transition-all duration-200 ${
                     active
-                      ? 'bg-tint-500 text-white shadow-tint-glow'
+                      ? 'bg-tint-500 text-white'
                       : d.isPast
                         ? 'ios-fill-3 text-ios-label-4 dark:text-ios-dlabel-4'
                         : 'ios-fill-2 text-ios-label dark:text-ios-dlabel hover:ios-fill-1'
@@ -713,9 +767,25 @@ export default function StudentClasses() {
                   </span>
                   <div className="flex-1 h-px bg-ios-separator dark:bg-ios-dseparator ml-1" />
                 </div>
-                <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {/* Mobile: stacked cards */}
+                <div className="sm:hidden space-y-2">
                   {group.aulas.map(aula => (
                     <ClassCard
+                      key={aula.id}
+                      aula={aula}
+                      dia={selectedDay}
+                      userId={userId}
+                      profNome={profNome(aula.professorId)}
+                      onBook={() => requestBook(aula, selectedDay)}
+                      onCancel={() => requestCancel(aula, selectedDay)}
+                      onFullClick={() => setFullModal({ aula, dia: selectedDay })}
+                    />
+                  ))}
+                </div>
+                {/* Desktop: scannable list */}
+                <div className="hidden sm:block ios-card overflow-hidden">
+                  {group.aulas.map(aula => (
+                    <DesktopListRow
                       key={aula.id}
                       aula={aula}
                       dia={selectedDay}
@@ -827,7 +897,8 @@ export default function StudentClasses() {
                                     if (inscrito || naFila) return requestCancel(aula, dia)
                                     requestBook(aula, dia)
                                   }}
-                                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-caption1 font-semibold transition-all active:scale-[0.96]"
+                                  title={inscrito ? 'Cancelar inscrição' : naFila ? 'Sair da fila de espera' : full ? 'Aula lotada — entrar na fila de espera' : 'Agendar esta aula'}
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-caption1 font-semibold transition-all active:scale-[0.96] cursor-pointer"
                                   style={{
                                     background: inscrito ? gradient : naFila ? 'rgba(255,149,0,0.18)' : full ? 'rgba(120,120,128,0.14)' : 'rgba(120,120,128,0.1)',
                                     color: inscrito ? '#fff' : naFila ? '#FF9500' : full ? 'rgba(60,60,67,0.4)' : 'inherit',
@@ -838,7 +909,7 @@ export default function StudentClasses() {
                                 >
                                   {dia}
                                   <span className="opacity-80 text-caption2 tabular-nums">
-                                    {inscrito ? ' ×' : naFila ? ' fila' : full ? ' lot.' : ` ${vagas}v`}
+                                    {inscrito ? ' ×' : naFila ? ' fila' : full ? ' lot.' : ` ${vagas} vaga${vagas !== 1 ? 's' : ''}`}
                                   </span>
                                 </button>
                               )
@@ -897,7 +968,7 @@ export default function StudentClasses() {
           onClose={() => setWeekDetails(null)}
           onBook={() => { requestBook(weekDetails.aula, weekDetails.dia); setWeekDetails(null) }}
           onCancel={() => { requestCancel(weekDetails.aula, weekDetails.dia); setWeekDetails(null) }}
-          onWaitlist={() => { requestBook(weekDetails.aula, weekDetails.dia); setWeekDetails(null) }}
+          onWaitlist={() => { handleWaitlist(weekDetails.aula.id, weekDetails.dia); setWeekDetails(null) }}
         />
       )}
 
@@ -1028,7 +1099,7 @@ function DayPickerModal({
                 onClick={() => onSelect(d.name)}
                 className={`aspect-square rounded-ios flex flex-col items-center justify-center gap-0.5 transition-all active:scale-[0.96] ${
                   active
-                    ? 'bg-tint-500 text-white shadow-tint-glow'
+                    ? 'bg-tint-500 text-white'
                     : d.isPast
                       ? 'ios-fill-3 text-ios-label-4 dark:text-ios-dlabel-4'
                       : 'ios-fill-2 text-ios-label dark:text-ios-dlabel'

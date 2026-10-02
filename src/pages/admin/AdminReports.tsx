@@ -3,8 +3,6 @@ import { FileDown, FileSpreadsheet, TrendingUp, Users, BarChart2, Clock } from '
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, CartesianGrid, AreaChart, Area } from 'recharts'
 import { useApp } from '../../context/AppContext'
 import { useToast } from '../../context/ToastContext'
-import { modalidadeAccent } from '../../components/ui/Badge'
-import type { ModalidadeType } from '../../types'
 import { getMaxOcupados, getMediaOcupacaoPct } from '../../utils/aulaUtils'
 
 const TOOLTIP_STYLE = {
@@ -17,7 +15,7 @@ const TOOLTIP_STYLE = {
 }
 
 export default function AdminReports() {
-  const { data } = useApp()
+  const { data, brandColor } = useApp()
   const { showToast } = useToast()
 
   const occByClass = useMemo(() => data.aulas.map(a => ({
@@ -31,11 +29,19 @@ export default function AdminReports() {
     return Object.entries(byMod).map(([name, value]) => ({ name, value }))
   }, [data.aulas])
 
-  const peakHours = [
-    { hora: '06h', alunos: 12 }, { hora: '07h', alunos: 28 }, { hora: '08h', alunos: 42 },
-    { hora: '09h', alunos: 18 }, { hora: '10h', alunos: 22 }, { hora: '17h', alunos: 30 },
-    { hora: '18h', alunos: 45 }, { hora: '19h', alunos: 51 }, { hora: '20h', alunos: 33 },
-  ]
+  const { peakHours, picoPeak } = useMemo(() => {
+    const byHora: Record<string, number> = {}
+    data.aulas.forEach(a => {
+      const hora = `${a.horario.split(':')[0]}h`
+      const total = Object.values(a.bookingsPorDia).reduce((sum, b) => sum + b.inscritos.length, 0)
+      byHora[hora] = (byHora[hora] || 0) + total
+    })
+    const sorted = Object.entries(byHora)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([hora, alunos]) => ({ hora, alunos }))
+    const peak = sorted.length > 0 ? sorted.reduce((best, h) => h.alunos > best.alunos ? h : best).hora : '—'
+    return { peakHours: sorted, picoPeak: peak }
+  }, [data.aulas])
 
   const totalInscritos = useMemo(() => {
     let sum = 0
@@ -75,18 +81,15 @@ export default function AdminReports() {
       {/* KPI strip — compact */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
         {[
-          { label: 'Total aulas', value: String(data.aulas.length), icon: <BarChart2 size={14} />, color: '#5E6AD2' },
+          { label: 'Total aulas', value: String(data.aulas.length), icon: <BarChart2 size={14} />, color: brandColor },
           { label: 'Inscrições', value: String(totalInscritos), icon: <Users size={14} />, color: '#34C759' },
           { label: 'Ocupação', value: `${mediaOcupacao}%`, icon: <TrendingUp size={14} />, color: '#FF9500' },
-          { label: 'Pico', value: '19h', icon: <Clock size={14} />, color: '#AF52DE' },
+          { label: 'Pico', value: picoPeak, icon: <Clock size={14} />, color: '#AF52DE' },
         ].map(k => (
           <div key={k.label} className="ios-card p-3 flex items-center gap-2.5">
             <div
               className="w-9 h-9 rounded-ios flex items-center justify-center shrink-0 text-white"
-              style={{
-                background: `linear-gradient(135deg, ${k.color} 0%, ${k.color}CC 100%)`,
-                boxShadow: `0 3px 10px ${k.color}44, inset 0 0 0 0.5px rgba(255,255,255,0.22)`,
-              }}
+              style={{ background: k.color }}
             >
               {k.icon}
             </div>
@@ -112,8 +115,8 @@ export default function AdminReports() {
                 <CartesianGrid strokeDasharray="0" stroke="rgba(60,60,67,0.1)" vertical={false} />
                 <XAxis dataKey="aula" tick={{ fontSize: 10, fill: '#8E8E93' }} axisLine={false} tickLine={false} interval={0} angle={-15} textAnchor="end" height={55} />
                 <YAxis tick={{ fontSize: 11, fill: '#8E8E93' }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: 'rgba(94,106,210,0.06)' }} />
-                <Bar dataKey="ocupacao" fill="#5E6AD2" radius={[6, 6, 0, 0]} />
+                <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
+                <Bar dataKey="ocupacao" fill={brandColor} radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -125,8 +128,8 @@ export default function AdminReports() {
             <ResponsiveContainer>
               <PieChart>
                 <Pie data={modShare} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={42} paddingAngle={4}>
-                  {modShare.map((entry, i) => (
-                    <Cell key={i} fill={modalidadeAccent(entry.name as ModalidadeType) || '#5E6AD2'} />
+                  {modShare.map((_entry, i) => (
+                    <Cell key={i} fill={brandColor} />
                   ))}
                 </Pie>
                 <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
@@ -145,15 +148,15 @@ export default function AdminReports() {
             <AreaChart data={peakHours}>
               <defs>
                 <linearGradient id="peakArea" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#5E6AD2" stopOpacity={0.38} />
-                  <stop offset="100%" stopColor="#5E6AD2" stopOpacity={0} />
+                  <stop offset="0%" stopColor={brandColor} stopOpacity={0.28} />
+                  <stop offset="100%" stopColor={brandColor} stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="0" stroke="rgba(60,60,67,0.1)" vertical={false} />
               <XAxis dataKey="hora" tick={{ fontSize: 11, fill: '#8E8E93' }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: '#8E8E93' }} axisLine={false} tickLine={false} />
               <Tooltip contentStyle={TOOLTIP_STYLE} />
-              <Area type="monotone" dataKey="alunos" stroke="#5E6AD2" strokeWidth={3} fill="url(#peakArea)" dot={{ r: 4, fill: '#5E6AD2', strokeWidth: 2, stroke: '#fff' }} />
+              <Area type="monotone" dataKey="alunos" stroke={brandColor} strokeWidth={3} fill="url(#peakArea)" dot={{ r: 4, fill: brandColor, strokeWidth: 2, stroke: '#fff' }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>

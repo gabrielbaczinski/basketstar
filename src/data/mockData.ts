@@ -1,5 +1,8 @@
 import type { AppData } from '../types'
 
+// u4 (Ana Lima) is Inativo — removed from all inscritos to maintain data integrity.
+// Inactive users cannot login but their record stays for admin reference.
+
 export const initialData: AppData = {
   configuracoes: {
     tempoLimiteCancelamentoMinutos: 60,
@@ -18,15 +21,15 @@ export const initialData: AppData = {
     { id: 'a1', modalidade: 'Pilates', professorId: 'p1',
       horario: '07:00', diasSemana: ['Segunda', 'Quarta', 'Sexta'], vagasTotais: 10,
       bookingsPorDia: {
-        Segunda: { inscritos: ['u2','u3','u4'], filaEspera: [] },
+        Segunda: { inscritos: ['u2','u3'], filaEspera: [] },
         Quarta:  { inscritos: ['u1','u2','u5'], filaEspera: [] },
-        Sexta:   { inscritos: ['u2','u3','u4','u5','u6'], filaEspera: [] },
+        Sexta:   { inscritos: ['u2','u3','u5','u6'], filaEspera: [] },
       },
     },
     { id: 'a2', modalidade: 'Pilates', professorId: 'p1',
       horario: '08:00', diasSemana: ['Segunda', 'Quarta'], vagasTotais: 6,
       bookingsPorDia: {
-        Segunda: { inscritos: ['u2','u3','u4','u5','u6','admin1'], filaEspera: ['u7','u8'] },
+        Segunda: { inscritos: ['u2','u3','u5','u6','admin1'], filaEspera: ['u7','u8'] },
         Quarta:  { inscritos: ['u1','u2','u3'], filaEspera: [] },
       },
     },
@@ -34,7 +37,7 @@ export const initialData: AppData = {
       horario: '18:00', diasSemana: ['Terça', 'Quinta'], vagasTotais: 8,
       bookingsPorDia: {
         'Terça':  { inscritos: ['u2','u3'], filaEspera: [] },
-        'Quinta': { inscritos: ['u2','u3','u4','u5'], filaEspera: [] },
+        'Quinta': { inscritos: ['u2','u3','u5'], filaEspera: [] },
       },
     },
 
@@ -42,23 +45,23 @@ export const initialData: AppData = {
     { id: 'a4', modalidade: 'Muay Thai', professorId: 'p2',
       horario: '07:30', diasSemana: ['Segunda', 'Quarta', 'Sexta'], vagasTotais: 15,
       bookingsPorDia: {
-        Segunda: { inscritos: ['u1','u2','u3','u4','u5','u6','u7','u8','u9','u10','u11','u12'], filaEspera: [] },
-        Quarta:  { inscritos: ['u1','u2','u3','u4'], filaEspera: [] },
-        Sexta:   { inscritos: ['u1','u2','u3','u4','u5','u6','u7','u8'], filaEspera: [] },
+        Segunda: { inscritos: ['u1','u2','u3','u5','u6','u7','u8','u9','u10','u11','u12'], filaEspera: [] },
+        Quarta:  { inscritos: ['u1','u2','u3'], filaEspera: [] },
+        Sexta:   { inscritos: ['u1','u2','u3','u5','u6','u7','u8'], filaEspera: [] },
       },
     },
     { id: 'a5', modalidade: 'Muay Thai', professorId: 'p2',
       horario: '19:00', diasSemana: ['Terça', 'Quinta'], vagasTotais: 15,
       bookingsPorDia: {
-        'Terça':  { inscritos: ['u1','u6','u3','u4','u7','u8'], filaEspera: [] },
+        'Terça':  { inscritos: ['u1','u6','u3','u7','u8'], filaEspera: [] },
         'Quinta': { inscritos: ['u1','u6'], filaEspera: [] },
       },
     },
     { id: 'a6', modalidade: 'Muay Thai', professorId: 'p2',
       horario: '20:00', diasSemana: ['Segunda', 'Quarta'], vagasTotais: 10,
       bookingsPorDia: {
-        Segunda: { inscritos: ['u2','u3','u4','u5','u6','admin1','u7','u8','u9','u10'], filaEspera: ['u11','u12','u13'] },
-        Quarta:  { inscritos: ['u2','u3','u4','u5','u6','admin1','u7','u8'], filaEspera: [] },
+        Segunda: { inscritos: ['u2','u3','u5','u6','admin1','u7','u8','u9','u10'], filaEspera: ['u11','u12','u13'] },
+        Quarta:  { inscritos: ['u2','u3','u5','u6','admin1','u7','u8'], filaEspera: [] },
       },
     },
 
@@ -66,9 +69,9 @@ export const initialData: AppData = {
     { id: 'a7', modalidade: 'Boxe', professorId: 'p2',
       horario: '06:00', diasSemana: ['Terça', 'Quinta', 'Sábado'], vagasTotais: 12,
       bookingsPorDia: {
-        'Terça':  { inscritos: ['u3','u4','u5'], filaEspera: [] },
-        'Quinta': { inscritos: ['u3','u4','u5','u6','u7'], filaEspera: [] },
-        'Sábado': { inscritos: ['u3','u4','u5','u6','u7','u8','u9','u10','u11','u12'], filaEspera: ['u13'] },
+        'Terça':  { inscritos: ['u3','u5'], filaEspera: [] },
+        'Quinta': { inscritos: ['u3','u5','u6','u7'], filaEspera: [] },
+        'Sábado': { inscritos: ['u3','u5','u6','u7','u8','u9','u10','u11','u12'], filaEspera: ['u13'] },
       },
     },
 
@@ -76,15 +79,15 @@ export const initialData: AppData = {
     { id: 'a8', modalidade: 'Spinning', professorId: 'p1',
       horario: '06:30', diasSemana: ['Segunda', 'Quarta', 'Sexta'], vagasTotais: 12,
       bookingsPorDia: {
-        Segunda: { inscritos: ['u2','u3','u4','u5','u6','u7','u8','u9','u10'], filaEspera: [] },
-        Quarta:  { inscritos: ['u2','u3','u4','u5'], filaEspera: [] },
-        Sexta:   { inscritos: ['u2','u3','u4','u5','u6','u7','u8','u9','u10','u11','u12'], filaEspera: ['u14'] },
+        Segunda: { inscritos: ['u2','u3','u5','u6','u7','u8','u9','u10'], filaEspera: [] },
+        Quarta:  { inscritos: ['u2','u3','u5'], filaEspera: [] },
+        Sexta:   { inscritos: ['u2','u3','u5','u6','u7','u8','u9','u10','u11','u12'], filaEspera: ['u14'] },
       },
     },
     { id: 'a9', modalidade: 'Spinning', professorId: 'p1',
       horario: '12:00', diasSemana: ['Terça', 'Quinta'], vagasTotais: 8,
       bookingsPorDia: {
-        'Terça':  { inscritos: ['u2','u3','u4','u5','u6','admin1','u7','u8'], filaEspera: ['u9','u10'] },
+        'Terça':  { inscritos: ['u2','u3','u5','u6','admin1','u7','u8'], filaEspera: ['u9','u10'] },
         'Quinta': { inscritos: ['u2','u3'], filaEspera: [] },
       },
     },
@@ -100,8 +103,8 @@ export const initialData: AppData = {
     { id: 'a11', modalidade: 'Yoga', professorId: 'p1',
       horario: '09:00', diasSemana: ['Terça', 'Quinta'], vagasTotais: 10,
       bookingsPorDia: {
-        'Terça':  { inscritos: ['u2','u4','u6'], filaEspera: [] },
-        'Quinta': { inscritos: ['u2','u4','u6','u8'], filaEspera: [] },
+        'Terça':  { inscritos: ['u2','u6'], filaEspera: [] },
+        'Quinta': { inscritos: ['u2','u6','u8'], filaEspera: [] },
       },
     },
     { id: 'a12', modalidade: 'Yoga', professorId: 'p1',
@@ -116,9 +119,9 @@ export const initialData: AppData = {
     { id: 'a13', modalidade: 'Funcional', professorId: 'p3',
       horario: '06:00', diasSemana: ['Segunda', 'Quarta', 'Sexta'], vagasTotais: 14,
       bookingsPorDia: {
-        Segunda: { inscritos: ['u2','u4','u6','u8','u10'], filaEspera: [] },
-        Quarta:  { inscritos: ['u2','u4','u6'], filaEspera: [] },
-        Sexta:   { inscritos: ['u2','u4','u6','u8','u10','u12'], filaEspera: [] },
+        Segunda: { inscritos: ['u2','u6','u8','u10'], filaEspera: [] },
+        Quarta:  { inscritos: ['u2','u6'], filaEspera: [] },
+        Sexta:   { inscritos: ['u2','u6','u8','u10','u12'], filaEspera: [] },
       },
     },
     { id: 'a14', modalidade: 'Funcional', professorId: 'p3',
@@ -133,14 +136,14 @@ export const initialData: AppData = {
     { id: 'a15', modalidade: 'Crossfit', professorId: 'p3',
       horario: '20:00', diasSemana: ['Terça', 'Quinta'], vagasTotais: 10,
       bookingsPorDia: {
-        'Terça':  { inscritos: ['u3','u5','u7','u9','u11','u13','u2','u4','u6','admin1'], filaEspera: ['u8','u10'] },
+        'Terça':  { inscritos: ['u3','u5','u7','u9','u11','u13','u2','u6','admin1'], filaEspera: ['u8','u10'] },
         'Quinta': { inscritos: ['u3','u5','u7'], filaEspera: [] },
       },
     },
     { id: 'a16', modalidade: 'Crossfit', professorId: 'p3',
       horario: '10:00', diasSemana: ['Sábado'], vagasTotais: 12,
       bookingsPorDia: {
-        'Sábado': { inscritos: ['u2','u4','u6','u8','u10'], filaEspera: [] },
+        'Sábado': { inscritos: ['u2','u6','u8','u10'], filaEspera: [] },
       },
     },
 
@@ -148,16 +151,16 @@ export const initialData: AppData = {
     { id: 'a17', modalidade: 'Zumba', professorId: 'p4',
       horario: '19:00', diasSemana: ['Segunda', 'Quarta', 'Sexta'], vagasTotais: 20,
       bookingsPorDia: {
-        Segunda: { inscritos: ['u2','u3','u4','u5','u6','u7'], filaEspera: [] },
-        Quarta:  { inscritos: ['u2','u3','u4','u5'], filaEspera: [] },
-        Sexta:   { inscritos: ['u2','u3','u4','u5','u6','u7','u8','u9','u10'], filaEspera: [] },
+        Segunda: { inscritos: ['u2','u3','u5','u6','u7'], filaEspera: [] },
+        Quarta:  { inscritos: ['u2','u3','u5'], filaEspera: [] },
+        Sexta:   { inscritos: ['u2','u3','u5','u6','u7','u8','u9','u10'], filaEspera: [] },
       },
     },
     { id: 'a18', modalidade: 'Dança', professorId: 'p4',
       horario: '20:30', diasSemana: ['Terça', 'Quinta'], vagasTotais: 15,
       bookingsPorDia: {
-        'Terça':  { inscritos: ['u3','u4','u5','u6','u7'], filaEspera: [] },
-        'Quinta': { inscritos: ['u3','u4','u5','u6','u7','u8','u9','u10','u11','u12','u13','u14','u15'], filaEspera: ['u16'] },
+        'Terça':  { inscritos: ['u3','u5','u6','u7'], filaEspera: [] },
+        'Quinta': { inscritos: ['u3','u5','u6','u7','u8','u9','u10','u11','u12','u13','u14','u15'], filaEspera: ['u16'] },
       },
     },
   ],
@@ -170,7 +173,15 @@ export const initialData: AppData = {
     { id: 'u6',    nome: 'Fernanda Costa',    idade: 27, celular: '(41) 94444-4444', email: 'fernanda@email.com', statusPlano: 'Ativo',   role: 'aluno' },
     { id: 'u7',    nome: 'Lucas Martins',     idade: 24, celular: '(41) 94111-1111', email: 'lucas@email.com',    statusPlano: 'Ativo',   role: 'aluno' },
     { id: 'u8',    nome: 'Isabela Ferreira',  idade: 29, celular: '(41) 94222-2222', email: 'isabela@email.com',  statusPlano: 'Ativo',   role: 'aluno' },
-    { id: 'admin1',nome: 'Admin Academia',    idade: 30, celular: '(41) 93333-3333', email: 'admin@academia.com', statusPlano: 'Ativo',   role: 'admin' },
+    { id: 'u9',    nome: 'Pedro Alves',        idade: 33, celular: '(41) 94333-3333', email: 'pedro@email.com',    statusPlano: 'Ativo',   role: 'aluno' },
+    { id: 'u10',   nome: 'Camila Dias',        idade: 26, celular: '(41) 94444-5555', email: 'camila@email.com',   statusPlano: 'Ativo',   role: 'aluno' },
+    { id: 'u11',   nome: 'Bruno Santos',       idade: 30, celular: '(41) 94555-6666', email: 'bruno@email.com',    statusPlano: 'Ativo',   role: 'aluno' },
+    { id: 'u12',   nome: 'Letícia Souza',      idade: 23, celular: '(41) 94666-7777', email: 'leticia@email.com',  statusPlano: 'Ativo',   role: 'aluno' },
+    { id: 'u13',   nome: 'Rodrigo Lima',       idade: 38, celular: '(41) 94777-8888', email: 'rodrigo@email.com',  statusPlano: 'Ativo',   role: 'aluno' },
+    { id: 'u14',   nome: 'Patrícia Cruz',      idade: 41, celular: '(41) 94888-9999', email: 'patricia@email.com', statusPlano: 'Ativo',   role: 'aluno' },
+    { id: 'u15',   nome: 'Marcos Nogueira',    idade: 36, celular: '(41) 94999-0000', email: 'marcos@email.com',   statusPlano: 'Ativo',   role: 'aluno' },
+    { id: 'u16',   nome: 'Juliana Mendes',     idade: 28, celular: '(41) 95000-1111', email: 'juliana@email.com',  statusPlano: 'Ativo',   role: 'aluno' },
+    { id: 'admin1',nome: 'Admin Academia',     idade: 30, celular: '(41) 93333-3333', email: 'admin@academia.com', statusPlano: 'Ativo',   role: 'admin' },
   ],
   mensagens: [
     { id: 'm1', de: 'u1', para: 'admin1', texto: 'Olá! Queria saber sobre o horário de Pilates.', timestamp: '2026-09-28T10:00:00Z', lida: true },

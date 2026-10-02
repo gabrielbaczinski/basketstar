@@ -31,6 +31,10 @@ function sanitize(data: AppData): AppData {
   return { ...data, aulas, attendance: data.attendance ?? {} }
 }
 
+function cloneInitial(): AppData {
+  return JSON.parse(JSON.stringify(initialData))
+}
+
 export function loadData(): AppData {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -38,7 +42,7 @@ export function loadData(): AppData {
   } catch {
     // corrupted — fall through to defaults
   }
-  return initialData
+  return cloneInitial()
 }
 
 export function saveData(data: AppData): void {
@@ -47,7 +51,7 @@ export function saveData(data: AppData): void {
 
 export function resetAppData(): AppData {
   localStorage.removeItem(STORAGE_KEY)
-  return initialData
+  return cloneInitial()
 }
 
 export function getCurrentUserId(): string | null {

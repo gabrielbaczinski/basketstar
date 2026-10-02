@@ -46,8 +46,8 @@ const adminTabs: NavItem[] = [
   { to: '/', label: 'Início', icon: LayoutDashboard },
   { to: '/aulas', label: 'Aulas', icon: CalendarDays },
   { to: '/usuarios', label: 'Alunos', icon: Users },
-  { to: '/mensagens', label: 'Mensagens', icon: Inbox },
-  { to: '/relatorios', label: 'Relatórios', icon: BarChart3 },
+  { to: '/comunidade', label: 'Comunidade', icon: Megaphone },
+  { to: '/mensagens', label: 'Msgs', icon: Inbox },
 ]
 
 function pageTitle(pathname: string, isAdmin: boolean): string {
@@ -77,10 +77,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           <NavLink to="/" className="flex items-center gap-2.5 shrink-0 group">
             <div
               className="w-8 h-8 rounded-ios flex items-center justify-center text-white transition-transform group-hover:scale-105"
-              style={{
-                background: 'linear-gradient(135deg, #5E6AD2 0%, #818CF8 100%)',
-                boxShadow: '0 4px 12px rgba(94,106,210,0.32), inset 0 0 0 0.5px rgba(255,255,255,0.3)',
-              }}
+              style={{ background: 'var(--brand)' }}
             >
               <Dumbbell size={16} strokeWidth={2.2} />
             </div>
@@ -136,10 +133,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             {location.pathname === '/' && (
               <div
                 className="w-7 h-7 rounded-ios-sm flex items-center justify-center text-white"
-                style={{
-                  background: 'linear-gradient(135deg, #5E6AD2 0%, #818CF8 100%)',
-                  boxShadow: '0 2px 6px rgba(94,106,210,0.3)',
-                }}
+                style={{ background: 'var(--brand)' }}
               >
                 <Dumbbell size={13} strokeWidth={2.2} />
               </div>
@@ -163,8 +157,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         </header>
 
         {/* ─────────── Main content area ─────────── */}
-        <main className="relative flex-1 overflow-y-auto pb-[88px] md:pb-6">
-          <div className="animate-fade-up">
+        <main className="relative flex-1 min-h-0">
+          <div className="animate-fade-up h-full overflow-y-auto overscroll-y-contain pb-[88px] md:pb-6">
             {children}
           </div>
         </main>
@@ -203,9 +197,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
         <HelpButton />
 
-        <div className="hidden md:block">
-          <AIChat />
-        </div>
+        <AIChat />
 
         <div className="md:hidden fixed top-2 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
           <div className="pointer-events-auto">

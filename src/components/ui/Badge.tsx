@@ -43,54 +43,19 @@ export default function Badge({ children, variant = 'default', className = '', d
   )
 }
 
-/* ─────────────────── Modalidade color system ─────────────────── */
-/* Free-text modalidade names → deterministic palette.           */
+/* ─── Modalidade helpers — single brand color, no rainbow ─── */
 
-interface Swatch {
-  accent: string
-  from: string
-  to: string
-  variant: Variant
+// Returns 'var(--brand)' so the CSS variable drives the color globally.
+export function modalidadeAccent(_m: ModalidadeType): string {
+  return 'var(--brand)'
 }
 
-const PALETTE: Swatch[] = [
-  { accent: '#AF52DE', from: '#AF52DE', to: '#DA70FF', variant: 'purple' }, // 0 — Pilates (canonical)
-  { accent: '#FF3B30', from: '#FF3B30', to: '#FF6482', variant: 'red' },    // 1 — Muay Thai (canonical)
-  { accent: '#FF9500', from: '#FF9500', to: '#FFB340', variant: 'orange' }, // 2 — Spinning  (canonical)
-  { accent: '#007AFF', from: '#007AFF', to: '#5AC8FA', variant: 'info' },   // 3 — blue
-  { accent: '#34C759', from: '#34C759', to: '#58D068', variant: 'success' },// 4 — green
-  { accent: '#00C7BE', from: '#00C7BE', to: '#30D1C8', variant: 'tint' },   // 5 — mint
-  { accent: '#5E6AD2', from: '#5E6AD2', to: '#818CF8', variant: 'tint' },   // 6 — indigo
-  { accent: '#FF2D55', from: '#FF2D55', to: '#FF6482', variant: 'danger' },// 7 — pink
-  { accent: '#30B0C7', from: '#30B0C7', to: '#64D2FF', variant: 'info' },   // 8 — teal
-  { accent: '#A2845E', from: '#A2845E', to: '#B99976', variant: 'default' },// 9 — brown
-]
-
-const CANONICAL: Record<string, number> = {
-  'Pilates': 0,
-  'Muay Thai': 1,
-  'Spinning': 2,
+// Returns flat brand color (no gradient).
+export function modalidadeGradient(_m: ModalidadeType): string {
+  return 'var(--brand)'
 }
 
-function swatchFor(name: ModalidadeType): Swatch {
-  const trimmed = (name || '').trim()
-  const canon = CANONICAL[trimmed]
-  if (canon !== undefined) return PALETTE[canon]
-  let h = 0
-  const key = trimmed.toLowerCase()
-  for (let i = 0; i < key.length; i++) h = (h * 131 + key.charCodeAt(i)) >>> 0
-  return PALETTE[h % PALETTE.length]
-}
-
-export function modalidadeAccent(m: ModalidadeType): string {
-  return swatchFor(m).accent
-}
-
-export function modalidadeGradient(m: ModalidadeType): string {
-  const s = swatchFor(m)
-  return `linear-gradient(135deg, ${s.from} 0%, ${s.to} 100%)`
-}
-
-export function modalidadeVariant(m: ModalidadeType): Variant {
-  return swatchFor(m).variant
+// All modality badges use the neutral 'default' style — no rainbow.
+export function modalidadeVariant(_m: ModalidadeType): Variant {
+  return 'default'
 }

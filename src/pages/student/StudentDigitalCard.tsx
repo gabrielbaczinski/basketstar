@@ -59,11 +59,7 @@ export default function StudentDigitalCard() {
   const [flipped, setFlipped] = useState(false)
   if (!currentUser) return null
 
-  const validade = new Date()
-  validade.setMonth(validade.getMonth() + 3)
   const isAtivo = currentUser.statusPlano === 'Ativo'
-  const since = new Date()
-  since.setFullYear(since.getFullYear() - 1)
 
   const memberId = currentUser.id.toUpperCase().slice(-8).padStart(8, '0')
   const grouped = `${memberId.slice(0, 4)} ${memberId.slice(4, 8)}`
@@ -199,9 +195,7 @@ export default function StudentDigitalCard() {
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-[8px] uppercase tracking-[0.14em] text-white/55 font-medium">Válido</p>
-                      <p className="text-[11px] font-semibold mt-0.5 tabular-nums">
-                        {validade.toLocaleDateString('pt-BR', { month: '2-digit', year: '2-digit' })}
-                      </p>
+                      <p className="text-[11px] font-semibold mt-0.5 tabular-nums">—/—</p>
                     </div>
                   </div>
                 </div>
@@ -280,8 +274,8 @@ export default function StudentDigitalCard() {
               Associação
             </p>
             <div className="ios-card-flat overflow-hidden">
-              <InfoRow label="Membro desde" value={since.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })} />
-              <InfoRow label="Vencimento" value={validade.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })} highlight={isAtivo ? 'green' : 'red'} />
+              <InfoRow label="Membro desde" value="—" />
+              <InfoRow label="Vencimento" value="—" />
               <InfoRow label="ID" value={memberId} mono />
             </div>
           </div>

@@ -1,18 +1,20 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   CalendarDays, ChevronRight, X, Megaphone, CreditCard,
   MessageCircle, ArrowRight, Clock, TrendingUp, Flame, Hourglass,
 } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
-import { modalidadeAccent, modalidadeGradient } from '../../components/ui/Badge'
+import { useToast } from '../../context/ToastContext'
+import { modalidadeAccent } from '../../components/ui/Badge'
+import Modal from '../../components/ui/Modal'
 import type { ModalidadeType } from '../../types'
 
-const QUICK: { to: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number }>; label: string; gradient: string }[] = [
-  { to: '/aulas',       icon: CalendarDays, label: 'Aulas',       gradient: 'linear-gradient(135deg, #5E6AD2 0%, #818CF8 100%)' },
-  { to: '/carteirinha', icon: CreditCard,   label: 'Carteirinha', gradient: 'linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%)' },
-  { to: '/comunidade',  icon: Megaphone,    label: 'Feed',        gradient: 'linear-gradient(135deg, #AF52DE 0%, #DA70FF 100%)' },
-  { to: '/chat',        icon: MessageCircle, label: 'Chat',       gradient: 'linear-gradient(135deg, #34C759 0%, #58D068 100%)' },
+const QUICK: { to: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number }>; label: string; color: string }[] = [
+  { to: '/aulas',       icon: CalendarDays,  label: 'Aulas',       color: 'var(--brand)' },
+  { to: '/carteirinha', icon: CreditCard,    label: 'Carteirinha', color: 'var(--brand)' },
+  { to: '/comunidade',  icon: Megaphone,     label: 'Feed',        color: 'var(--brand)' },
+  { to: '/chat',        icon: MessageCircle, label: 'Chat',        color: 'var(--brand)' },
 ]
 
 function greeting(): string {
@@ -26,6 +28,20 @@ const DIAS_SEMANA = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'
 
 export default function StudentDashboard() {
   const { data, currentUser, cancelClassDia } = useApp()
+  const { showToast } = useToast()
+  const [cancelPending, setCancelPending] = useState<{ aulaId: string; dia: string; modalidade: string; isWaitlist: boolean } | null>(null)
+
+  const doCancel = () => {
+    if (!cancelPending) return
+    const res = cancelClassDia(cancelPending.aulaId, cancelPending.dia)
+    if (cancelPending.isWaitlist) {
+      if (res === 'removed_from_waitlist') showToast(`Saiu da fila de ${cancelPending.modalidade} — ${cancelPending.dia}.`, 'info')
+    } else {
+      if (res === 'ok') showToast('Aula cancelada com sucesso.', 'success')
+      else if (res === 'too_late') showToast('Prazo encerrado — não é mais possível cancelar.', 'warning')
+    }
+    setCancelPending(null)
+  }
 
   const minhasAulas = useMemo(() => {
     if (!currentUser) return []
@@ -86,10 +102,10 @@ export default function StudentDashboard() {
         <div className="space-y-4 min-w-0">
           {/* Hero stat card */}
           <div
-            className="relative rounded-ios-xl p-5 overflow-hidden text-white"
+            className="relative rounded-ios-md p-5 overflow-hidden text-white"
             style={{
-              background: 'radial-gradient(130% 100% at 0% 0%, #5E6AD2 0%, #4B55B8 50%, #2F3677 100%)',
-              boxShadow: '0 12px 32px -8px rgba(94,106,210,0.4), inset 0 0 0 0.5px rgba(255,255,255,0.14)',
+              background: 'var(--brand)',
+              boxShadow: '0 4px 16px -4px rgba(229,90,43,0.30), inset 0 0 0 0.5px rgba(255,255,255,0.14)',
             }}
           >
             <div className="absolute inset-0 dots-pattern opacity-30 pointer-events-none" />
@@ -145,9 +161,7 @@ export default function StudentDashboard() {
               <div className="ios-card py-8 flex flex-col items-center gap-2 text-center px-6">
                 <div
                   className="w-12 h-12 rounded-full flex items-center justify-center mb-1"
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(94,106,210,0.14) 0%, rgba(129,140,248,0.18) 100%)',
-                  }}
+                  style={{ background: 'rgba(229,90,43,0.10)' }}
                 >
                   <CalendarDays size={20} className="text-tint-500" />
                 </div>
@@ -160,17 +174,16 @@ export default function StudentDashboard() {
                 </Link>
               </div>
             ) : (
-              <div className="ios-card-flat overflow-hidden">
+              <div className="ios-card-flat max-h-[380px] overflow-y-auto">
                 {minhasAulas.map((item) => {
                   const { aula, dia } = item
                   const accent = modalidadeAccent(aula.modalidade as ModalidadeType)
-                  const gradient = modalidadeGradient(aula.modalidade as ModalidadeType)
                   return (
                     <div
                       key={`${aula.id}-${dia}`}
                       className="ios-list-row flex items-center gap-3 px-4 py-2.5"
                     >
-                      <div className="w-1 self-stretch rounded-full shrink-0" style={{ background: gradient }} />
+                      <div className="w-1 self-stretch rounded-full shrink-0" style={{ background: accent }} />
                       <div className="shrink-0 w-[64px]">
                         <p className="text-callout font-bold tabular-nums text-ios-label dark:text-ios-dlabel leading-none">
                           {aula.horario}
@@ -188,7 +201,7 @@ export default function StudentDashboard() {
                         </p>
                       </div>
                       <button
-                        onClick={() => cancelClassDia(aula.id, dia)}
+                        onClick={() => setCancelPending({ aulaId: aula.id, dia, modalidade: aula.modalidade, isWaitlist: false })}
                         className="w-7 h-7 rounded-full text-ios-label-3 dark:text-ios-dlabel-3 hover:text-sys-red hover:bg-sys-red/10 flex items-center justify-center transition-colors shrink-0"
                         aria-label="Cancelar aula"
                       >
@@ -230,7 +243,7 @@ export default function StudentDashboard() {
                         </p>
                       </div>
                       <button
-                        onClick={() => cancelClassDia(aula.id, dia)}
+                        onClick={() => setCancelPending({ aulaId: aula.id, dia, modalidade: aula.modalidade, isWaitlist: true })}
                         className="w-7 h-7 rounded-full text-ios-label-3 dark:text-ios-dlabel-3 hover:text-sys-red hover:bg-sys-red/10 flex items-center justify-center transition-colors shrink-0"
                         aria-label="Sair da fila"
                       >
@@ -249,7 +262,7 @@ export default function StudentDashboard() {
 
           {/* Quick actions grid */}
           <div className="grid grid-cols-4 gap-2">
-            {QUICK.map(({ to, icon: Icon, label, gradient }) => (
+            {QUICK.map(({ to, icon: Icon, label, color }) => (
               <Link
                 key={to}
                 to={to}
@@ -257,10 +270,7 @@ export default function StudentDashboard() {
               >
                 <div
                   className="w-9 h-9 rounded-ios flex items-center justify-center text-white transition-transform group-hover:scale-[1.06]"
-                  style={{
-                    background: gradient,
-                    boxShadow: '0 3px 10px rgba(0,0,0,0.12), inset 0 0 0 0.5px rgba(255,255,255,0.25)',
-                  }}
+                  style={{ background: color }}
                 >
                   <Icon size={16} strokeWidth={2} />
                 </div>
@@ -281,9 +291,11 @@ export default function StudentDashboard() {
                 <TrendingUp size={11} className="text-sys-green" />
               </div>
               <p className="text-title3 font-bold text-ios-label dark:text-ios-dlabel tabular-nums leading-none">
-                {Math.min(100, 60 + streak * 8)}%
+                {streak === 0 ? '—' : `${Math.min(100, Math.round((streak / 5) * 100))}%`}
               </p>
-              <p className="text-caption2 text-ios-label-2 dark:text-ios-dlabel-2 mt-1">do objetivo</p>
+              <p className="text-caption2 text-ios-label-2 dark:text-ios-dlabel-2 mt-1">
+                {streak === 0 ? 'sem aulas ainda' : 'de 5 por semana'}
+              </p>
             </div>
             <div className="ios-card p-3">
               <div className="flex items-center justify-between mb-1">
@@ -319,9 +331,7 @@ export default function StudentDashboard() {
                   <div key={av.id} className="ios-list-row flex items-start gap-3 px-3.5 py-2.5">
                     <div
                       className="w-7 h-7 rounded-ios flex items-center justify-center shrink-0 mt-0.5"
-                      style={{
-                        background: 'linear-gradient(135deg, rgba(94,106,210,0.14) 0%, rgba(129,140,248,0.18) 100%)',
-                      }}
+                      style={{ background: 'rgba(229,90,43,0.10)' }}
                     >
                       <Megaphone size={12} className="text-tint-500" />
                     </div>
@@ -345,6 +355,29 @@ export default function StudentDashboard() {
           </section>
         </div>
       </div>
+
+      <Modal
+        open={!!cancelPending}
+        onClose={() => setCancelPending(null)}
+        title={cancelPending?.isWaitlist ? 'Sair da fila' : 'Cancelar aula'}
+        footer={
+          <div className="flex justify-end gap-2">
+            <button onClick={() => setCancelPending(null)} className="ios-btn-gray">Manter</button>
+            <button
+              onClick={doCancel}
+              className="bg-sys-red text-white text-footnote font-semibold px-4 py-2 rounded-full transition-colors hover:brightness-110 active:scale-[0.97]"
+            >
+              {cancelPending?.isWaitlist ? 'Sair da fila' : 'Cancelar aula'}
+            </button>
+          </div>
+        }
+      >
+        <p className="text-footnote text-ios-label-2 dark:text-ios-dlabel-2">
+          {cancelPending?.isWaitlist
+            ? `Deseja sair da fila de espera de ${cancelPending?.modalidade} — ${cancelPending?.dia}?`
+            : `Deseja cancelar ${cancelPending?.modalidade} — ${cancelPending?.dia}? Sua vaga poderá ser ocupada por outro aluno.`}
+        </p>
+      </Modal>
     </div>
   )
 }

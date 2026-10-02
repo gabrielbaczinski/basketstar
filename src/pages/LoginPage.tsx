@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import {
   Dumbbell, Sun, Moon, ArrowRight, Sparkles, CalendarCheck,
-  MessageSquare, BarChart3, AlertCircle, Shield, ChevronDown,
+  MessageSquare, BarChart3, AlertCircle, Shield, UserPlus, Mail,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import Avatar from '../components/ui/Avatar'
+import Modal from '../components/ui/Modal'
 
 const FEATURES = [
   { icon: CalendarCheck, label: 'Agendamentos', text: 'Gerencie sua agenda com fila de espera automática' },
@@ -13,21 +14,29 @@ const FEATURES = [
 ]
 
 export default function LoginPage() {
-  const { data, login, isDark, toggleDark } = useApp()
-  const [selected, setSelected] = useState<string>('u1')
+  const { data, login, signupAndLogin, isDark, toggleDark } = useApp()
+  const [emailInput, setEmailInput] = useState('')
   const [loginError, setLoginError] = useState<string | null>(null)
+  const [signupOpen, setSignupOpen] = useState(false)
 
-  const alunos = data.usuarios.filter(u => u.role === 'aluno')
-  const admins = data.usuarios.filter(u => u.role === 'admin')
-  const selectedUser = data.usuarios.find(u => u.id === selected)
+  const matchedUser = emailInput.trim()
+    ? data.usuarios.find(u => u.email.toLowerCase() === emailInput.trim().toLowerCase())
+    : null
 
   const handleLogin = () => {
     setLoginError(null)
-    const res = login(selected)
+    const trimmed = emailInput.trim()
+    if (!trimmed) {
+      setLoginError('Informe seu email para continuar.')
+      return
+    }
+    if (!matchedUser) {
+      setLoginError('Email não cadastrado. Verifique ou crie uma conta.')
+      return
+    }
+    const res = login(matchedUser.id)
     if (res === 'inactive') {
-      setLoginError(`A matrícula de ${selectedUser?.nome.split(' ')[0] ?? 'este aluno'} está inativa. Procure a recepção para regularizar.`)
-    } else if (res === 'not_found') {
-      setLoginError('Usuário não encontrado.')
+      setLoginError(`A matrícula de ${matchedUser.nome.split(' ')[0]} está inativa. Procure a recepção para regularizar.`)
     }
   }
 
@@ -50,17 +59,17 @@ export default function LoginPage() {
         className="hidden lg:flex lg:w-1/2 xl:w-[55%] relative overflow-hidden text-white p-12 flex-col justify-between"
         style={{
           background:
-            'radial-gradient(120% 90% at 0% 0%, #4B55B8 0%, #1F2545 55%, #0A0E26 100%)',
+            'radial-gradient(120% 90% at 0% 0%, #C54820 0%, #7A2B12 55%, #2A0E06 100%)',
         }}
       >
         {/* Mesh glows */}
         <div
-          className="absolute top-[-10%] right-[-15%] w-[600px] h-[600px] rounded-full opacity-45 pointer-events-none animate-pulse-soft"
-          style={{ background: 'radial-gradient(circle, #818CF8 0%, transparent 60%)' }}
+          className="absolute top-[-10%] right-[-15%] w-[600px] h-[600px] rounded-full opacity-30 pointer-events-none animate-pulse-soft"
+          style={{ background: 'radial-gradient(circle, #FF8A65 0%, transparent 60%)' }}
         />
         <div
-          className="absolute bottom-[-20%] left-[-15%] w-[560px] h-[560px] rounded-full opacity-35 pointer-events-none"
-          style={{ background: 'radial-gradient(circle, #EC4899 0%, transparent 60%)' }}
+          className="absolute bottom-[-20%] left-[-15%] w-[560px] h-[560px] rounded-full opacity-20 pointer-events-none"
+          style={{ background: 'radial-gradient(circle, #F06838 0%, transparent 60%)' }}
         />
         <div className="absolute inset-0 dots-pattern opacity-20 pointer-events-none" />
 
@@ -90,7 +99,7 @@ export default function LoginPage() {
           </div>
           <h1 className="text-ltitle leading-[1.1] tracking-tight mb-5">
             A sua academia,<br />
-            <span className="bg-gradient-to-r from-white via-indigo-100 to-pink-200 bg-clip-text text-transparent">
+            <span className="text-white/80">
               moderna e inteligente.
             </span>
           </h1>
@@ -103,7 +112,7 @@ export default function LoginPage() {
                 <div
                   className="w-10 h-10 rounded-ios flex items-center justify-center shrink-0 text-white"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(94,106,210,0.5) 0%, rgba(129,140,248,0.3) 100%)',
+                    background: 'rgba(255,255,255,0.18)',
                     boxShadow: 'inset 0 0 0 0.5px rgba(255,255,255,0.2)',
                   }}
                 >
@@ -131,10 +140,7 @@ export default function LoginPage() {
           <div className="lg:hidden flex flex-col items-center mb-8">
             <div
               className="w-14 h-14 rounded-ios-md flex items-center justify-center text-white mb-3"
-              style={{
-                background: 'linear-gradient(135deg, #5E6AD2 0%, #818CF8 100%)',
-                boxShadow: '0 10px 24px rgba(94,106,210,0.4), inset 0 0 0 0.5px rgba(255,255,255,0.25)',
-              }}
+              style={{ background: 'var(--brand)' }}
             >
               <Dumbbell size={22} strokeWidth={2.2} />
             </div>
@@ -150,64 +156,53 @@ export default function LoginPage() {
             Bem-vindo
           </h2>
           <p className="text-footnote text-ios-label-2 dark:text-ios-dlabel-2 mb-6 text-center lg:text-left">
-            Selecione seu perfil para continuar.
+            Entre com seu email para continuar.
           </p>
 
-          {/* User selector — dropdown */}
+          {/* Email input */}
           <div className="mb-3">
-            <label htmlFor="user-select" className="block text-caption2 font-semibold uppercase tracking-wider text-ios-label-2 dark:text-ios-dlabel-2 mb-2 px-1">
-              Perfil de acesso
+            <label htmlFor="email-input" className="block text-caption2 font-semibold uppercase tracking-wider text-ios-label-2 dark:text-ios-dlabel-2 mb-2 px-1">
+              Email
             </label>
             <div className="relative">
-              <select
-                id="user-select"
-                value={selected}
-                onChange={e => { setSelected(e.target.value); setLoginError(null) }}
-                className="ios-input appearance-none pr-10 !py-3"
-              >
-                <optgroup label="Alunos">
-                  {alunos.map(u => (
-                    <option key={u.id} value={u.id}>
-                      {u.nome}{u.statusPlano === 'Inativo' ? ' — inativo' : ''}
-                    </option>
-                  ))}
-                </optgroup>
-                <optgroup label="Administradores">
-                  {admins.map(u => (
-                    <option key={u.id} value={u.id}>{u.nome}</option>
-                  ))}
-                </optgroup>
-              </select>
-              <ChevronDown
-                size={16}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-ios-label-3 dark:text-ios-dlabel-3 pointer-events-none"
+              <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ios-label-3 dark:text-ios-dlabel-3 pointer-events-none" />
+              <input
+                id="email-input"
+                type="email"
+                value={emailInput}
+                onChange={e => { setEmailInput(e.target.value); setLoginError(null) }}
+                onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                placeholder="seu@email.com"
+                className="ios-input !pl-9"
+                autoFocus
+                autoComplete="email"
               />
             </div>
           </div>
 
-          {/* Selected user preview card */}
-          {selectedUser && (
+          {/* Matched user preview card */}
+          {matchedUser && (
             <div className="ios-card p-3 mb-4 flex items-center gap-3 animate-fade-up">
-              <Avatar name={selectedUser.nome} size="md" />
+              <Avatar name={matchedUser.nome} size="md" />
               <div className="flex-1 min-w-0">
                 <p className="text-footnote font-semibold text-ios-label dark:text-ios-dlabel truncate">
-                  {selectedUser.nome}
+                  {matchedUser.nome}
                 </p>
                 <p className="text-caption1 text-ios-label-2 dark:text-ios-dlabel-2 truncate">
-                  {selectedUser.email}
+                  {matchedUser.email}
                 </p>
               </div>
               <span
                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-caption2 font-bold shrink-0 ${
-                  selectedUser.role === 'admin'
+                  matchedUser.role === 'admin'
                     ? 'bg-tint-500/14 text-tint-600 dark:text-tint-300'
-                    : selectedUser.statusPlano === 'Ativo'
+                    : matchedUser.statusPlano === 'Ativo'
                       ? 'bg-sys-green/14 text-sys-green'
                       : 'bg-sys-red/14 text-sys-red'
                 }`}
               >
-                {selectedUser.role === 'admin' ? <Shield size={9} /> : null}
-                {selectedUser.role === 'admin' ? 'Admin' : selectedUser.statusPlano}
+                {matchedUser.role === 'admin' ? <Shield size={9} /> : null}
+                {matchedUser.role === 'admin' ? 'Admin' : matchedUser.statusPlano}
               </span>
             </div>
           )}
@@ -226,6 +221,24 @@ export default function LoginPage() {
             Entrar <ArrowRight size={15} strokeWidth={2.4} />
           </button>
 
+          <div className="flex items-center gap-3 my-5">
+            <div className="h-px flex-1 bg-ios-separator dark:bg-ios-dseparator" />
+            <span className="text-caption2 font-semibold uppercase tracking-wider text-ios-label-3 dark:text-ios-dlabel-3">
+              ou
+            </span>
+            <div className="h-px flex-1 bg-ios-separator dark:bg-ios-dseparator" />
+          </div>
+
+          <button
+            onClick={() => setSignupOpen(true)}
+            className="w-full inline-flex items-center justify-center gap-1.5 bg-ios-fill-2 hover:ios-fill-1 text-ios-label dark:text-ios-dlabel text-callout font-semibold py-3 rounded-ios transition-colors active:scale-[0.98]"
+          >
+            <UserPlus size={15} strokeWidth={2.2} /> Criar nova conta
+          </button>
+
+          {/* Quick-switch for demo */}
+          <QuickSwitch onSelect={(email) => { setEmailInput(email); setLoginError(null) }} />
+
           <div className="flex items-center justify-center gap-1.5 mt-6">
             <Sparkles size={11} className="text-ios-label-3 dark:text-ios-dlabel-3" />
             <p className="text-caption2 text-ios-label-3 dark:text-ios-dlabel-3 text-center">
@@ -234,6 +247,213 @@ export default function LoginPage() {
           </div>
         </div>
       </main>
+
+      {signupOpen && (
+        <SignupModal
+          initialEmail={emailInput}
+          onClose={() => setSignupOpen(false)}
+          onSignup={(form) => {
+            signupAndLogin(form)
+            setSignupOpen(false)
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+/* ─────────────────── Quick Switch (demo) ─────────────────── */
+
+function QuickSwitch({ onSelect }: { onSelect: (email: string) => void }) {
+  const { data } = useApp()
+  const [open, setOpen] = useState(false)
+  const alunos = data.usuarios.filter(u => u.role === 'aluno')
+  const admins = data.usuarios.filter(u => u.role === 'admin')
+
+  return (
+    <div className="mt-4">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="w-full text-caption2 font-semibold text-ios-label-3 dark:text-ios-dlabel-3 uppercase tracking-wider flex items-center justify-center gap-1.5 py-2 hover:text-ios-label-2 dark:hover:text-ios-dlabel-2 transition-colors"
+      >
+        Acesso rápido — demo
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="12" height="12" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" strokeWidth="2.5"
+          className={`transition-transform ${open ? 'rotate-180' : ''}`}
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+      {open && (
+        <div className="mt-2 ios-card overflow-hidden animate-fade-up max-h-[260px] overflow-y-auto">
+          <div className="px-3 pt-2.5 pb-1">
+            <p className="text-caption2 font-semibold uppercase tracking-wider text-ios-label-3 dark:text-ios-dlabel-3">Alunos</p>
+          </div>
+          {alunos.map(u => (
+            <button
+              key={u.id}
+              type="button"
+              onClick={() => { onSelect(u.email); setOpen(false) }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-ios-fill-2 dark:hover:bg-ios-dfill-2 transition-colors text-left"
+            >
+              <Avatar name={u.nome} size="sm" />
+              <div className="flex-1 min-w-0">
+                <p className="text-caption1 font-semibold text-ios-label dark:text-ios-dlabel truncate">{u.nome}</p>
+                <p className="text-caption2 text-ios-label-3 dark:text-ios-dlabel-3 truncate">{u.email}</p>
+              </div>
+              {u.statusPlano === 'Inativo' && (
+                <span className="text-caption2 font-semibold text-sys-red shrink-0">Inativo</span>
+              )}
+            </button>
+          ))}
+          <div className="px-3 pt-2.5 pb-1 mt-1 border-t border-ios-separator dark:border-ios-dseparator">
+            <p className="text-caption2 font-semibold uppercase tracking-wider text-ios-label-3 dark:text-ios-dlabel-3">Administradores</p>
+          </div>
+          {admins.map(u => (
+            <button
+              key={u.id}
+              type="button"
+              onClick={() => { onSelect(u.email); setOpen(false) }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 pb-3 hover:bg-ios-fill-2 dark:hover:bg-ios-dfill-2 transition-colors text-left"
+            >
+              <Avatar name={u.nome} size="sm" />
+              <div className="flex-1 min-w-0">
+                <p className="text-caption1 font-semibold text-ios-label dark:text-ios-dlabel truncate">{u.nome}</p>
+                <p className="text-caption2 text-ios-label-3 dark:text-ios-dlabel-3 truncate">{u.email}</p>
+              </div>
+              <span className="text-caption2 font-semibold text-tint-600 dark:text-tint-300 shrink-0 flex items-center gap-0.5">
+                <Shield size={9} /> Admin
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ─────────────────── Signup Modal ─────────────────── */
+
+interface SignupForm {
+  nome: string
+  email: string
+  celular: string
+  idade: number
+  dataNascimento: string
+}
+
+function SignupModal({
+  initialEmail = '',
+  onClose,
+  onSignup,
+}: {
+  initialEmail?: string
+  onClose: () => void
+  onSignup: (f: SignupForm) => void
+}) {
+  const { data } = useApp()
+  const [nome, setNome] = useState('')
+  const [email, setEmail] = useState(initialEmail)
+  const [celular, setCelular] = useState('')
+  const [dataNascimento, setDataNascimento] = useState('')
+  const [error, setError] = useState('')
+
+  const submit = () => {
+    const n = nome.trim()
+    const e = email.trim()
+    const c = celular.trim()
+    if (!n) return setError('Informe seu nome completo.')
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return setError('Informe um email válido.')
+    if (data.usuarios.some(u => u.email.toLowerCase() === e.toLowerCase()))
+      return setError('Este email já está cadastrado. Tente fazer login.')
+    if (!c) return setError('Informe seu celular.')
+    if (!dataNascimento) return setError('Informe sua data de nascimento.')
+    const i = Math.floor((Date.now() - new Date(dataNascimento + 'T12:00:00').getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+    if (!Number.isFinite(i) || i < 10 || i > 100) return setError('Data de nascimento inválida (deve ter entre 10 e 100 anos).')
+    onSignup({ nome: n, email: e, celular: c, idade: i, dataNascimento })
+  }
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="Criar conta"
+      footer={
+        <div className="flex justify-end gap-2">
+          <button onClick={onClose} className="ios-btn-gray">Cancelar</button>
+          <button onClick={submit} className="ios-btn-primary">
+            <UserPlus size={14} strokeWidth={2.4} /> Criar e entrar
+          </button>
+        </div>
+      }
+    >
+      <p className="text-footnote text-ios-label-2 dark:text-ios-dlabel-2 mb-4">
+        Crie sua conta de aluno em segundos. Após o cadastro, você entra automaticamente e pode começar a agendar aulas.
+      </p>
+      <div className="space-y-3">
+        <SignupField label="Nome completo">
+          <input
+            type="text"
+            value={nome}
+            onChange={e => { setNome(e.target.value); setError('') }}
+            placeholder="Ex.: João da Silva"
+            className="ios-input"
+            autoFocus
+          />
+        </SignupField>
+        <SignupField label="Email">
+          <input
+            type="email"
+            value={email}
+            onChange={e => { setEmail(e.target.value); setError('') }}
+            placeholder="voce@exemplo.com"
+            className="ios-input"
+          />
+        </SignupField>
+        <div className="grid grid-cols-2 gap-3">
+          <SignupField label="Celular">
+            <input
+              type="tel"
+              value={celular}
+              onChange={e => { setCelular(e.target.value); setError('') }}
+              placeholder="(41) 9 0000-0000"
+              className="ios-input"
+            />
+          </SignupField>
+          <SignupField label="Nascimento">
+            <input
+              type="date"
+              value={dataNascimento}
+              onChange={e => { setDataNascimento(e.target.value); setError('') }}
+              className="ios-input"
+              max={new Date(Date.now() - 10 * 365.25 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)}
+            />
+          </SignupField>
+        </div>
+        {error && (
+          <div className="flex items-start gap-2 px-3 py-2 bg-sys-red/12 text-sys-red rounded-ios text-caption1">
+            <AlertCircle size={13} className="shrink-0 mt-0.5" />
+            <span>{error}</span>
+          </div>
+        )}
+        <p className="text-caption2 text-ios-label-3 dark:text-ios-dlabel-3">
+          Ao criar sua conta, você aceita os termos de uso da demonstração. Nenhum dado é enviado — tudo fica salvo apenas no seu navegador.
+        </p>
+      </div>
+    </Modal>
+  )
+}
+
+function SignupField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="block text-caption2 font-semibold text-ios-label-2 dark:text-ios-dlabel-2 mb-1.5 uppercase tracking-wider px-1">
+        {label}
+      </label>
+      {children}
     </div>
   )
 }

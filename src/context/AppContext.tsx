@@ -3,8 +3,13 @@ import type { AppData, Usuario, Aula, Aviso, Mensagem, Configuracoes, Attendance
 import { loadData, saveData, getCurrentUserId, setCurrentUser, clearCurrentUser, resetAppData } from '../data/storage'
 import { getBookingDia } from '../utils/aulaUtils'
 
-type BookResult = 'booked' | 'waitlisted' | 'full' | 'already_booked' | 'inactive'
+type BookResult = 'booked' | 'waitlisted' | 'full' | 'already_booked' | 'inactive' | 'conflict'
 type LoginResult = 'ok' | 'inactive' | 'not_found'
+type CancelResult = 'ok' | 'too_late' | 'not_found' | 'removed_from_waitlist'
+
+const DIA_TO_DOW: Record<string, number> = {
+  'Domingo': 0, 'Segunda': 1, 'Terça': 2, 'Quarta': 3, 'Quinta': 4, 'Sexta': 5, 'Sábado': 6,
+}
 
 interface AppContextType {
   data: AppData
@@ -12,13 +17,15 @@ interface AppContextType {
   isDark: boolean
   isOffline: boolean
   activeView: 'aluno' | 'admin'
+  brandColor: string
+  setBrandColor: (color: string) => void
   login: (userId: string) => LoginResult
   logout: () => void
   toggleDark: () => void
   setActiveView: (view: 'aluno' | 'admin') => void
   // Per-day booking (new)
   bookClassDia: (aulaId: string, dia: string) => BookResult
-  cancelClassDia: (aulaId: string, dia: string) => boolean
+  cancelClassDia: (aulaId: string, dia: string) => CancelResult
   joinWaitlistDia: (aulaId: string, dia: string) => void
   updateConfiguracoes: (cfg: Configuracoes) => void
   addAviso: (titulo: string, corpo: string) => void
@@ -26,7 +33,8 @@ interface AppContextType {
   sendMensagem: (para: string, texto: string) => void
   markAttendance: (aulaId: string, userId: string, present: boolean, date?: string) => void
   getAttendance: (aulaId: string, date?: string) => Record<string, AttendanceStatus>
-  addUsuario: (u: Omit<Usuario, 'id'>) => void
+  addUsuario: (u: Omit<Usuario, 'id'>) => Usuario
+  signupAndLogin: (u: Omit<Usuario, 'id' | 'role' | 'statusPlano'>) => Usuario
   updateUsuarioStatus: (userId: string, status: 'Ativo' | 'Inativo') => void
   updateAula: (aula: Aula) => void
   addAula: (aula: Omit<Aula, 'id'>) => void
@@ -47,6 +55,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isOffline, setIsOffline] = useState(!navigator.onLine)
   const [activeView, setActiveViewState] = useState<'aluno' | 'admin'>('aluno')
   const [currentUserId, setCurrentUserId] = useState<string | null>(getCurrentUserId)
+  const [brandColor, setBrandColorState] = useState(() => localStorage.getItem('brandColor') ?? '#E55A2B')
 
   const currentUser = currentUserId ? data.usuarios.find(u => u.id === currentUserId) ?? null : null
 
@@ -54,6 +63,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.classList.toggle('dark', isDark)
     localStorage.setItem('darkMode', String(isDark))
   }, [isDark])
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--brand', brandColor)
+    localStorage.setItem('brandColor', brandColor)
+  }, [brandColor])
+
+  const setBrandColor = useCallback((color: string) => setBrandColorState(color), [])
 
   useEffect(() => {
     const up = () => setIsOffline(false)
@@ -86,6 +102,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!currentUserId) return 'already_booked'
     const me = data.usuarios.find(u => u.id === currentUserId)
     if (me && me.role !== 'admin' && me.statusPlano === 'Inativo') return 'inactive'
+    // Block if user already has a confirmed booking at the same time on the same day
+    const targetAula = data.aulas.find(a => a.id === aulaId)
+    if (targetAula) {
+      const hasConflict = data.aulas.some(a => {
+        if (a.id === aulaId) return false
+        if (a.horario !== targetAula.horario) return false
+        return a.bookingsPorDia[dia]?.inscritos.includes(currentUserId) ?? false
+      })
+      if (hasConflict) return 'conflict'
+    }
     let result: BookResult | null = null
     updateData(d => {
       const aulas = d.aulas.map(a => {
@@ -114,29 +140,75 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return result ?? 'already_booked'
   }, [currentUserId, updateData, data.usuarios])
 
-  const cancelClassDia = useCallback((aulaId: string, dia: string): boolean => {
-    if (!currentUserId) return false
-    let ok = false
+  const cancelClassDia = useCallback((aulaId: string, dia: string): CancelResult => {
+    if (!currentUserId) return 'not_found'
+
+    const aula = data.aulas.find(a => a.id === aulaId)
+    const booking = aula ? getBookingDia(aula, dia) : null
+    const isInFila = booking?.filaEspera.includes(currentUserId) ?? false
+
+    // Deadline only applies when removing from inscritos, not from waitlist.
+    if (!isInFila && aula) {
+      const limite = data.configuracoes.tempoLimiteCancelamentoMinutos
+      // limite === 0 means no restriction (always cancellable).
+      if (limite > 0) {
+        const now = new Date()
+        const todayDow = now.getDay()
+        const classDow = DIA_TO_DOW[dia] ?? -1
+        if (todayDow === classDow) {
+          const [h, m] = aula.horario.split(':').map(Number)
+          const classMinutes = (h ?? 0) * 60 + (m ?? 0)
+          const nowMinutes = now.getHours() * 60 + now.getMinutes()
+          if (nowMinutes >= classMinutes - limite) return 'too_late'
+        }
+      }
+    }
+
+    let result: CancelResult = 'not_found'
     updateData(d => {
+      const notifMsgs: Mensagem[] = []
       const aulas = d.aulas.map(a => {
         if (a.id !== aulaId) return a
-        const booking = getBookingDia(a, dia)
-        if (!booking.inscritos.includes(currentUserId)) return a
-        ok = true
-        let inscritos = booking.inscritos.filter(id => id !== currentUserId)
-        const filaEspera = [...booking.filaEspera]
+        const b = getBookingDia(a, dia)
+
+        // Remove from waitlist
+        if (b.filaEspera.includes(currentUserId)) {
+          result = 'removed_from_waitlist'
+          return {
+            ...a,
+            bookingsPorDia: {
+              ...a.bookingsPorDia,
+              [dia]: { ...b, filaEspera: b.filaEspera.filter(id => id !== currentUserId) },
+            },
+          }
+        }
+
+        // Remove from inscritos and promote waitlist if automatic
+        if (!b.inscritos.includes(currentUserId)) return a
+        result = 'ok'
+        let inscritos = b.inscritos.filter(id => id !== currentUserId)
+        const filaEspera = [...b.filaEspera]
         if (d.configuracoes.modoFilaEspera === 'AUTOMATICO' && filaEspera.length > 0) {
-          inscritos = [...inscritos, filaEspera.shift()!]
+          const promoted = filaEspera.shift()!
+          inscritos = [...inscritos, promoted]
+          notifMsgs.push({
+            id: `m${Date.now()}${Math.random().toString(36).slice(2, 5)}`,
+            de: 'admin1',
+            para: promoted,
+            texto: `Boa notícia! Uma vaga abriu em ${a.modalidade} — ${dia} ${a.horario} e você foi confirmado(a). Até lá!`,
+            timestamp: new Date().toISOString(),
+            lida: false,
+          })
         }
         return {
           ...a,
           bookingsPorDia: { ...a.bookingsPorDia, [dia]: { inscritos, filaEspera } },
         }
       })
-      return { ...d, aulas }
+      return { ...d, aulas, mensagens: [...d.mensagens, ...notifMsgs] }
     })
-    return ok
-  }, [currentUserId, updateData])
+    return result
+  }, [currentUserId, data.aulas, data.configuracoes, updateData])
 
   const joinWaitlistDia = useCallback((aulaId: string, dia: string) => {
     if (!currentUserId) return
@@ -190,17 +262,55 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return data.attendance?.[`${aulaId}_${date ?? todayKey()}`] ?? {}
   }, [data.attendance])
 
-  const addUsuario = useCallback((u: Omit<Usuario, 'id'>) => {
+  const addUsuario = useCallback((u: Omit<Usuario, 'id'>): Usuario => {
     const newUser: Usuario = { ...u, id: `u${Date.now()}${Math.random().toString(36).slice(2, 6)}` }
     updateData(d => ({ ...d, usuarios: [...d.usuarios, newUser] }))
+    return newUser
   }, [updateData])
 
   const updateUsuarioStatus = useCallback((userId: string, status: 'Ativo' | 'Inativo') => {
     updateData(d => ({ ...d, usuarios: d.usuarios.map(u => u.id === userId ? { ...u, statusPlano: status } : u) }))
   }, [updateData])
 
+  const signupAndLogin = useCallback((u: Omit<Usuario, 'id' | 'role' | 'statusPlano'>): Usuario => {
+    const newUser: Usuario = {
+      ...u,
+      id: `u${Date.now()}${Math.random().toString(36).slice(2, 6)}`,
+      role: 'aluno',
+      statusPlano: 'Ativo',
+    }
+    updateData(d => ({ ...d, usuarios: [...d.usuarios, newUser] }))
+    // Login directly — bypasses the data.usuarios lookup race.
+    setCurrentUser(newUser.id)
+    setCurrentUserId(newUser.id)
+    setActiveViewState('aluno')
+    return newUser
+  }, [updateData])
+
   const updateAula = useCallback((aula: Aula) => {
-    updateData(d => ({ ...d, aulas: d.aulas.map(a => a.id === aula.id ? aula : a) }))
+    updateData(d => {
+      const old = d.aulas.find(a => a.id === aula.id)
+      const newCap = Math.max(0, Math.floor(Number(aula.vagasTotais) || 0))
+      const oldCap = Math.max(0, Math.floor(Number(old?.vagasTotais) || 0))
+      // Auto-promote waitlist when capacity increases and mode is automatic
+      let updated = aula
+      if (newCap > oldCap && d.configuracoes.modoFilaEspera === 'AUTOMATICO') {
+        const newBookings = { ...aula.bookingsPorDia }
+        aula.diasSemana.forEach(dia => {
+          const booking = newBookings[dia] ?? { inscritos: [], filaEspera: [] }
+          const available = newCap - booking.inscritos.length
+          if (available > 0 && booking.filaEspera.length > 0) {
+            const promoted = booking.filaEspera.slice(0, available)
+            newBookings[dia] = {
+              inscritos: [...booking.inscritos, ...promoted],
+              filaEspera: booking.filaEspera.slice(promoted.length),
+            }
+          }
+        })
+        updated = { ...aula, bookingsPorDia: newBookings }
+      }
+      return { ...d, aulas: d.aulas.map(a => a.id === aula.id ? updated : a) }
+    })
   }, [updateData])
 
   const addAula = useCallback((aulaData: Omit<Aula, 'id'>) => {
@@ -215,15 +325,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const resetDemo = useCallback(() => {
     const fresh = resetAppData()
     setData(fresh)
+    clearCurrentUser()
+    setCurrentUserId(null)
   }, [])
 
   return (
     <AppContext.Provider value={{
-      data, currentUser, isDark, isOffline, activeView,
+      data, currentUser, isDark, isOffline, activeView, brandColor, setBrandColor,
       login, logout, toggleDark, setActiveView,
       bookClassDia, cancelClassDia, joinWaitlistDia,
       updateConfiguracoes, addAviso, deleteAviso, sendMensagem,
-      markAttendance, getAttendance, addUsuario, updateUsuarioStatus, updateAula, addAula, deleteAula,
+      markAttendance, getAttendance, addUsuario, signupAndLogin, updateUsuarioStatus, updateAula, addAula, deleteAula,
       resetDemo,
     }}>
       {children}

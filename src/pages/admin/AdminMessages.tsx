@@ -108,16 +108,13 @@ export default function AdminMessages() {
           {selectedId ? (
             <>
               <div className="px-4 py-3 flex items-center gap-3 hairline-b shrink-0">
-                <div className="relative">
-                  <Avatar name={userName(selectedId)} size="md" />
-                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-sys-green ring-2 ring-white dark:ring-ios-dbg-elev" />
-                </div>
+                <Avatar name={userName(selectedId)} size="md" />
                 <div>
                   <p className="text-callout font-semibold text-ios-label dark:text-ios-dlabel">
                     {userName(selectedId)}
                   </p>
-                  <p className="text-caption1 text-ios-label-3 dark:text-ios-dlabel-3">
-                    {selectedUser?.statusPlano === 'Ativo' ? '● Plano ativo' : '○ Plano inativo'}
+                  <p className={`text-caption1 font-semibold ${selectedUser?.statusPlano === 'Ativo' ? 'text-sys-green' : 'text-sys-red'}`}>
+                    {selectedUser?.statusPlano === 'Ativo' ? 'Plano ativo' : 'Plano inativo'}
                   </p>
                 </div>
               </div>
@@ -137,10 +134,7 @@ export default function AdminMessages() {
                           }`}
                           style={
                             mine
-                              ? {
-                                  background: 'linear-gradient(135deg, #5E6AD2 0%, #818CF8 100%)',
-                                  boxShadow: '0 2px 6px rgba(94,106,210,0.28)',
-                                }
+                              ? { background: 'var(--brand)' }
                               : undefined
                           }
                         >
@@ -168,10 +162,7 @@ export default function AdminMessages() {
                   onClick={reply}
                   disabled={!text.trim()}
                   className="w-10 h-10 rounded-full text-white flex items-center justify-center shrink-0 transition-all active:scale-95 disabled:opacity-40"
-                  style={{
-                    background: 'linear-gradient(135deg, #5E6AD2 0%, #818CF8 100%)',
-                    boxShadow: '0 4px 12px rgba(94,106,210,0.3)',
-                  }}
+                  style={{ background: 'var(--brand)' }}
                   aria-label="Enviar"
                 >
                   <Send size={15} />
@@ -182,9 +173,7 @@ export default function AdminMessages() {
             <div className="flex-1 flex flex-col items-center justify-center gap-2 text-center p-6">
               <div
                 className="w-14 h-14 rounded-full flex items-center justify-center"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(94,106,210,0.14) 0%, rgba(129,140,248,0.18) 100%)',
-                }}
+                style={{ background: 'rgba(229,90,43,0.10)' }}
               >
                 <MessageSquare size={20} className="text-tint-500" />
               </div>

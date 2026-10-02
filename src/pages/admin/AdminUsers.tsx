@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef } from 'react'
-import { Search, Plus, Upload, Sparkles, FileText, Check, Users } from 'lucide-react'
+import { Search, Plus, Upload, Sparkles, FileText, Check, Users, AlertCircle } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import type { Usuario } from '../../types'
 import Avatar from '../../components/ui/Avatar'
@@ -16,6 +16,8 @@ export default function AdminUsers() {
   const { data, addUsuario, updateUsuarioStatus } = useApp()
   const { showToast } = useToast()
 
+  const [togglePending, setTogglePending] = useState<Usuario | null>(null)
+
   const toggleStatus = (u: Usuario) => {
     const next = u.statusPlano === 'Ativo' ? 'Inativo' : 'Ativo'
     updateUsuarioStatus(u.id, next)
@@ -24,6 +26,7 @@ export default function AdminUsers() {
 
   const [q, setQ] = useState('')
   const [openNew, setOpenNew] = useState(false)
+  const [formError, setFormError] = useState('')
   const [csvPreview, setCsvPreview] = useState<CSVPreview | null>(null)
   const [drag, setDrag] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -47,13 +50,20 @@ export default function AdminUsers() {
   const ativos = data.usuarios.filter(u => u.role === 'aluno' && u.statusPlano === 'Ativo').length
 
   const submit = () => {
-    if (!form.nome.trim() || !form.email.trim()) {
-      showToast('Preencha nome e email.', 'warning')
+    const nome = form.nome.trim()
+    const email = form.email.trim()
+    setFormError('')
+    if (!nome) { setFormError('Informe o nome completo.'); return }
+    if (!email) { setFormError('Informe o email.'); return }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setFormError('Informe um email válido.'); return }
+    if (data.usuarios.some(u => u.email.toLowerCase() === email.toLowerCase())) {
+      setFormError('Este email já está cadastrado. Verifique ou use outro endereço.')
       return
     }
-    addUsuario(form)
+    addUsuario({ ...form, nome, email })
     showToast('Aluno cadastrado com sucesso.', 'success')
     setOpenNew(false)
+    setFormError('')
     setForm({ nome: '', idade: 18, celular: '', email: '', statusPlano: 'Ativo', role: 'aluno' })
   }
 
@@ -144,20 +154,16 @@ export default function AdminUsers() {
       </div>
 
       {/* Compact stats pills */}
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         {[
-          { label: 'Total', value: totalAlunos, color: '#5E6AD2' },
+          { label: 'Total', value: totalAlunos, color: '#E55A2B' },
           { label: 'Ativos', value: ativos, color: '#34C759' },
           { label: 'Inativos', value: totalAlunos - ativos, color: '#FF3B30' },
-          { label: 'Busca', value: alunos.length, color: '#FF9500' },
         ].map(s => (
           <div key={s.label} className="ios-card p-3 flex items-center gap-2.5">
             <div
               className="w-8 h-8 rounded-ios flex items-center justify-center shrink-0 text-white"
-              style={{
-                background: `linear-gradient(135deg, ${s.color} 0%, ${s.color}CC 100%)`,
-                boxShadow: `0 3px 8px ${s.color}44, inset 0 0 0 0.5px rgba(255,255,255,0.22)`,
-              }}
+              style={{ background: s.color }}
             >
               <Users size={13} />
             </div>
@@ -221,7 +227,7 @@ export default function AdminUsers() {
                   <td className="px-5 py-2.5 text-footnote text-ios-label-2 dark:text-ios-dlabel-2">{u.email}</td>
                   <td className="px-5 py-2.5">
                     <button
-                      onClick={() => toggleStatus(u)}
+                      onClick={() => setTogglePending(u)}
                       title={u.statusPlano === 'Ativo' ? 'Inativar matrícula (bloqueia acesso)' : 'Ativar matrícula'}
                       className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-caption1 font-semibold transition-all active:scale-[0.96] ${
                         u.statusPlano === 'Ativo'
@@ -253,7 +259,7 @@ export default function AdminUsers() {
               <p className="text-caption1 text-ios-label-3 dark:text-ios-dlabel-3 font-mono">{u.celular}</p>
             </div>
             <button
-              onClick={() => toggleStatus(u)}
+              onClick={() => setTogglePending(u)}
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-caption2 font-bold shrink-0 transition-all active:scale-[0.96] ${
                 u.statusPlano === 'Ativo'
                   ? 'bg-sys-green/12 text-sys-green'
@@ -268,13 +274,19 @@ export default function AdminUsers() {
       </div>
 
       {/* New user modal */}
-      <Modal open={openNew} onClose={() => setOpenNew(false)} title="Novo aluno" footer={
+      <Modal open={openNew} onClose={() => { setOpenNew(false); setFormError('') }} title="Novo aluno" footer={
         <div className="flex justify-end gap-2">
-          <button onClick={() => setOpenNew(false)} className="ios-btn-gray">Cancelar</button>
+          <button onClick={() => { setOpenNew(false); setFormError('') }} className="ios-btn-gray">Cancelar</button>
           <button onClick={submit} className="ios-btn-primary">Cadastrar</button>
         </div>
       }>
         <div className="space-y-3">
+          {formError && (
+            <div className="flex items-start gap-2 px-3 py-2 bg-sys-red/12 text-sys-red rounded-ios text-caption1">
+              <AlertCircle size={13} className="shrink-0 mt-0.5" />
+              <span>{formError}</span>
+            </div>
+          )}
           <Field label="Nome completo">
             <TextInput value={form.nome} onChange={v => setForm(f => ({ ...f, nome: v }))} />
           </Field>
@@ -301,6 +313,34 @@ export default function AdminUsers() {
           </Field>
         </div>
       </Modal>
+
+      {/* Toggle status confirmation */}
+      {togglePending && (
+        <Modal
+          open
+          onClose={() => setTogglePending(null)}
+          title={togglePending.statusPlano === 'Ativo' ? 'Inativar matrícula' : 'Ativar matrícula'}
+          footer={
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setTogglePending(null)} className="ios-btn-gray">Cancelar</button>
+              <button
+                onClick={() => { toggleStatus(togglePending); setTogglePending(null) }}
+                className={`text-white text-footnote font-semibold px-4 py-2 rounded-full transition-colors hover:brightness-110 active:scale-[0.97] ${
+                  togglePending.statusPlano === 'Ativo' ? 'bg-sys-red' : 'bg-sys-green'
+                }`}
+              >
+                {togglePending.statusPlano === 'Ativo' ? 'Inativar' : 'Ativar'}
+              </button>
+            </div>
+          }
+        >
+          <p className="text-footnote text-ios-label-2 dark:text-ios-dlabel-2">
+            {togglePending.statusPlano === 'Ativo'
+              ? `Inativar a matrícula de ${togglePending.nome.split(' ')[0]} vai bloquear o acesso à plataforma. Deseja continuar?`
+              : `Ativar a matrícula de ${togglePending.nome.split(' ')[0]} vai restaurar o acesso à plataforma. Deseja continuar?`}
+          </p>
+        </Modal>
+      )}
 
       {/* CSV preview modal */}
       <Modal open={!!csvPreview} onClose={() => setCsvPreview(null)} title="Importação de CSV" size="xl" footer={

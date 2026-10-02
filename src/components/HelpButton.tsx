@@ -24,7 +24,7 @@ export default function HelpButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-20 md:bottom-6 right-20 z-40 w-11 h-11 rounded-full ios-glass-heavy text-ios-label-2 dark:text-ios-dlabel-2 hover:text-ios-label dark:hover:text-ios-dlabel flex items-center justify-center transition-colors shadow-ios-3"
+        className="fixed bottom-20 md:bottom-6 right-[5.5rem] z-40 w-11 h-11 rounded-full ios-glass-heavy text-ios-label-2 dark:text-ios-dlabel-2 hover:text-ios-label dark:hover:text-ios-dlabel flex items-center justify-center transition-colors shadow-ios-3"
         aria-label="Ajuda"
       >
         <HelpCircle size={18} />

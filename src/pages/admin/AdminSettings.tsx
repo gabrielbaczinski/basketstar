@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { Save, Clock, Users2, CalendarRange, RefreshCw } from 'lucide-react'
+import { Save, Clock, Users2, CalendarRange, RefreshCw, Palette } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import Toggle from '../../components/ui/Toggle'
 import { useToast } from '../../context/ToastContext'
 import type { Configuracoes } from '../../types'
 
 const CANCEL_OPTIONS: { label: string; description: string; value: number }[] = [
-  { label: 'Flexível', description: 'Sem limite', value: 0 },
+  { label: 'Flexível', description: 'Cancela a qualquer hora', value: 0 },
   { label: '30 min', description: '30 min antes', value: 30 },
   { label: '1 hora', description: '1h antes', value: 60 },
   { label: '2 horas', description: '2h antes', value: 120 },
@@ -17,10 +17,7 @@ function SectionHeader({ icon, title, subtitle }: { icon: React.ReactNode; title
     <div className="flex items-center gap-2.5 mb-3">
       <div
         className="w-8 h-8 rounded-ios flex items-center justify-center text-white shrink-0"
-        style={{
-          background: 'linear-gradient(135deg, #5E6AD2 0%, #818CF8 100%)',
-          boxShadow: '0 3px 8px rgba(94,106,210,0.26)',
-        }}
+        style={{ background: 'var(--brand)' }}
       >
         {icon}
       </div>
@@ -33,11 +30,13 @@ function SectionHeader({ icon, title, subtitle }: { icon: React.ReactNode; title
 }
 
 export default function AdminSettings() {
-  const { data, updateConfiguracoes } = useApp()
+  const { data, updateConfiguracoes, brandColor, setBrandColor } = useApp()
   const { showToast } = useToast()
   const [cfg, setCfg] = useState<Configuracoes>(data.configuracoes)
+  const isDirty = JSON.stringify(cfg) !== JSON.stringify(data.configuracoes)
 
   const save = () => {
+    if (!isDirty) return
     updateConfiguracoes(cfg)
     showToast('Configurações salvas.', 'success')
   }
@@ -51,9 +50,37 @@ export default function AdminSettings() {
             Regras de agendamento e fila de espera
           </p>
         </div>
-        <button onClick={save} className="ios-btn-primary">
+        <button onClick={save} disabled={!isDirty} className="ios-btn-primary disabled:opacity-40 disabled:cursor-not-allowed">
           <Save size={13} /> Salvar
         </button>
+      </div>
+
+      {/* Brand color */}
+      <div className="ios-card p-4 mb-3">
+        <SectionHeader icon={<Palette size={14} />} title="Cor do sistema" subtitle="White-label — altera toda a interface" />
+        <div className="flex gap-3 flex-wrap">
+          {[
+            { label: 'Laranja', value: '#E55A2B' },
+            { label: 'Azul',   value: '#007AFF' },
+            { label: 'Roxo',   value: '#5E6AD2' },
+            { label: 'Verde',  value: '#0CA679' },
+            { label: 'Rosa',   value: '#FF2D55' },
+            { label: 'Cinza',  value: '#6C6C70' },
+          ].map(c => (
+            <button
+              key={c.value}
+              onClick={() => setBrandColor(c.value)}
+              title={c.label}
+              className="w-8 h-8 rounded-full transition-all active:scale-90 shrink-0"
+              style={{
+                background: c.value,
+                boxShadow: brandColor === c.value
+                  ? `0 0 0 2px white, 0 0 0 4px ${c.value}`
+                  : 'none',
+              }}
+            />
+          ))}
+        </div>
       </div>
 
       {/* 2-column grid on desktop — denser */}
@@ -71,7 +98,7 @@ export default function AdminSettings() {
                     ? 'bg-tint-500/10 dark:bg-tint-500/16'
                     : 'ios-fill-3 hover:ios-fill-2'
                 }`}
-                style={cfg.tempoLimiteCancelamentoMinutos === opt.value ? { boxShadow: 'inset 0 0 0 1.5px #5E6AD2' } : undefined}
+                style={cfg.tempoLimiteCancelamentoMinutos === opt.value ? { boxShadow: 'inset 0 0 0 1.5px var(--brand)' } : undefined}
               >
                 <input
                   type="radio"
@@ -100,21 +127,24 @@ export default function AdminSettings() {
           <SectionHeader icon={<Users2 size={14} />} title="Fila de espera" subtitle="Como as vagas são liberadas" />
           <div className="grid gap-1.5">
             {[
-              { value: 'AUTOMATICO', label: 'Automático', desc: 'Promove o primeiro da fila' },
-              { value: 'CORRIDA', label: 'Corrida', desc: 'Todos notificados, 1º a clicar leva' },
+              { value: 'AUTOMATICO', label: 'Automático', desc: '1° da fila é promovido automaticamente ao abrir vaga', disabled: false },
+              { value: 'CORRIDA', label: 'Corrida', desc: 'Todos os alunos da fila são notificados ao abrir vaga — primeiro a confirmar fica com ela', disabled: false },
             ].map(opt => (
               <button
                 key={opt.value}
-                onClick={() => setCfg(c => ({ ...c, modoFilaEspera: opt.value as 'AUTOMATICO' | 'CORRIDA' }))}
+                disabled={opt.disabled}
+                onClick={() => !opt.disabled && setCfg(c => ({ ...c, modoFilaEspera: opt.value as 'AUTOMATICO' | 'CORRIDA' }))}
                 className={`p-2.5 rounded-ios text-left transition-all ${
-                  cfg.modoFilaEspera === opt.value
-                    ? 'bg-tint-500/10 dark:bg-tint-500/16'
-                    : 'ios-fill-3 hover:ios-fill-2'
+                  opt.disabled
+                    ? 'ios-fill-3 opacity-50 cursor-not-allowed'
+                    : cfg.modoFilaEspera === opt.value
+                      ? 'bg-tint-500/10 dark:bg-tint-500/16'
+                      : 'ios-fill-3 hover:ios-fill-2'
                 }`}
-                style={cfg.modoFilaEspera === opt.value ? { boxShadow: 'inset 0 0 0 1.5px #5E6AD2' } : undefined}
+                style={!opt.disabled && cfg.modoFilaEspera === opt.value ? { boxShadow: 'inset 0 0 0 1.5px var(--brand)' } : undefined}
               >
                 <p className={`text-footnote font-semibold ${
-                  cfg.modoFilaEspera === opt.value
+                  !opt.disabled && cfg.modoFilaEspera === opt.value
                     ? 'text-tint-700 dark:text-tint-300'
                     : 'text-ios-label dark:text-ios-dlabel'
                 }`}>
@@ -130,7 +160,7 @@ export default function AdminSettings() {
 
         {/* Advance days */}
         <div className="ios-card p-4">
-          <SectionHeader icon={<CalendarRange size={14} />} title="Antecedência" subtitle="Dias no futuro" />
+          <SectionHeader icon={<CalendarRange size={14} />} title="Agendamento antecipado" subtitle="Com quantos dias de antecedência o aluno pode reservar uma aula" />
           <div className="flex items-center gap-3 px-1">
             <input
               type="range"

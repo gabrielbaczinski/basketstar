@@ -33,7 +33,7 @@ export default function Modal({ open, onClose, title, children, size = 'md', foo
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 animate-fade-up">
-      <div className="absolute inset-0 bg-black/35 backdrop-blur-md" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-[6px]" onClick={onClose} />
       <div
         className={`relative w-full ${sizeMap[size]} bg-ios-bg dark:bg-ios-dbg-elev sm:rounded-ios-xl rounded-t-ios-xl shadow-ios-5 max-h-[94vh] sm:max-h-[90vh] flex flex-col overflow-hidden animate-scale-in`}
       >

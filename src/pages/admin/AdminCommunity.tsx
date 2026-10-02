@@ -1,31 +1,35 @@
 import { useState } from 'react'
-import { Send, Trash2, Megaphone } from 'lucide-react'
+import { Send, Trash2, Megaphone, AlertCircle } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import Avatar from '../../components/ui/Avatar'
 import { useToast } from '../../context/ToastContext'
+import Modal from '../../components/ui/Modal'
 
 export default function AdminCommunity() {
   const { data, addAviso, deleteAviso } = useApp()
   const { showToast } = useToast()
   const [titulo, setTitulo] = useState('')
   const [corpo, setCorpo] = useState('')
+  const [error, setError] = useState('')
+  const [deletePending, setDeletePending] = useState<string | null>(null)
 
   const authorName = (id: string) => data.usuarios.find(u => u.id === id)?.nome ?? 'Admin'
 
   const publish = () => {
-    if (!titulo.trim() || !corpo.trim()) {
-      showToast('Preencha título e mensagem.', 'warning')
-      return
-    }
+    if (!titulo.trim()) { setError('Informe o título do aviso.'); return }
+    if (!corpo.trim()) { setError('Escreva a mensagem do aviso.'); return }
+    setError('')
     addAviso(titulo, corpo)
     showToast('Aviso publicado.', 'success')
     setTitulo('')
     setCorpo('')
   }
 
-  const remove = (id: string) => {
-    deleteAviso(id)
+  const remove = () => {
+    if (!deletePending) return
+    deleteAviso(deletePending)
     showToast('Aviso removido.', 'info')
+    setDeletePending(null)
   }
 
   return (
@@ -41,14 +45,11 @@ export default function AdminCommunity() {
       <div className="grid gap-4 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)] lg:items-start">
 
         {/* Composer */}
-        <div className="ios-card p-4 lg:sticky lg:top-4">
+        <div className="ios-card p-4 md:sticky md:top-4">
           <div className="flex items-center gap-2 mb-3">
             <div
               className="w-8 h-8 rounded-ios flex items-center justify-center text-white"
-              style={{
-                background: 'linear-gradient(135deg, #5E6AD2 0%, #818CF8 100%)',
-                boxShadow: '0 3px 8px rgba(94,106,210,0.26)',
-              }}
+              style={{ background: 'var(--brand)' }}
             >
               <Megaphone size={14} />
             </div>
@@ -57,17 +58,23 @@ export default function AdminCommunity() {
           <div className="space-y-2.5">
             <input
               value={titulo}
-              onChange={e => setTitulo(e.target.value)}
+              onChange={e => { setTitulo(e.target.value); setError('') }}
               placeholder="Título do aviso"
               className="ios-input !py-2.5"
             />
             <textarea
               value={corpo}
-              onChange={e => setCorpo(e.target.value)}
+              onChange={e => { setCorpo(e.target.value); setError('') }}
               placeholder="Escreva a mensagem que os alunos verão…"
               rows={4}
               className="ios-input !py-2.5 resize-none"
             />
+            {error && (
+              <div className="flex items-start gap-2 px-3 py-2 bg-sys-red/12 text-sys-red rounded-ios text-caption1">
+                <AlertCircle size={13} className="shrink-0 mt-0.5" />
+                <span>{error}</span>
+              </div>
+            )}
             <div className="flex items-center justify-between">
               <p className="text-caption1 text-ios-label-3 dark:text-ios-dlabel-3 tabular-nums">
                 {corpo.length} caracteres
@@ -107,7 +114,7 @@ export default function AdminCommunity() {
                         </p>
                       </div>
                       <button
-                        onClick={() => remove(av.id)}
+                        onClick={() => setDeletePending(av.id)}
                         className="w-7 h-7 rounded-full text-ios-label-3 dark:text-ios-dlabel-3 hover:text-sys-red hover:bg-sys-red/10 flex items-center justify-center transition-colors shrink-0"
                         aria-label="Remover aviso"
                       >
@@ -124,6 +131,27 @@ export default function AdminCommunity() {
           )}
         </div>
       </div>
+
+      <Modal
+        open={!!deletePending}
+        onClose={() => setDeletePending(null)}
+        title="Remover aviso"
+        footer={
+          <div className="flex justify-end gap-2">
+            <button onClick={() => setDeletePending(null)} className="ios-btn-gray">Cancelar</button>
+            <button
+              onClick={remove}
+              className="bg-sys-red text-white text-footnote font-semibold px-4 py-2 rounded-full transition-colors hover:brightness-110"
+            >
+              Remover
+            </button>
+          </div>
+        }
+      >
+        <p className="text-footnote text-ios-label-2 dark:text-ios-dlabel-2">
+          Tem certeza que deseja remover este aviso? Os alunos não poderão mais vê-lo.
+        </p>
+      </Modal>
     </div>
   )
 }

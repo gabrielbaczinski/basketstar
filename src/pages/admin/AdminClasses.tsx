@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Pencil, ClipboardList, Check, X, Plus, Trash2, Upload, Download, AlertCircle } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import type { Aula, ModalidadeType } from '../../types'
-import Badge, { modalidadeVariant, modalidadeGradient } from '../../components/ui/Badge'
+import Badge, { modalidadeVariant } from '../../components/ui/Badge'
 import Modal from '../../components/ui/Modal'
 import OccupancyBar from '../../components/ui/OccupancyBar'
 import { useToast } from '../../context/ToastContext'
@@ -22,6 +22,7 @@ export default function AdminClasses() {
   const [showCsv, setShowCsv] = useState(false)
   const [attendance, setAttendance] = useState<Aula | null>(null)
   const [attendanceDay, setAttendanceDay] = useState<string>('')
+  const [attendanceDate, setAttendanceDate] = useState<string>('')
   const [attendanceState, setAttendanceState] = useState<Record<string, Presence>>({})
 
   const professorNome = (id: string) => data.professores.find(p => p.id === id)?.nome ?? '—'
@@ -33,20 +34,22 @@ export default function AdminClasses() {
   ])).filter(Boolean)
 
   const openAttendance = (aula: Aula) => {
+    const today = new Date().toISOString().slice(0, 10)
     setAttendance(aula)
     setAttendanceDay(aula.diasSemana[0] ?? '')
+    setAttendanceDate(today)
   }
 
   useEffect(() => {
     if (!attendance || !attendanceDay) return
-    const saved = getAttendance(attendance.id)
+    const saved = getAttendance(attendance.id, attendanceDate || undefined)
     const booking = getBookingDia(attendance, attendanceDay)
     const init: Record<string, Presence> = {}
     booking.inscritos.forEach(id => {
       init[id] = (saved[id] as Presence) ?? 'unset'
     })
     setAttendanceState(init)
-  }, [attendance, attendanceDay, getAttendance])
+  }, [attendance, attendanceDay, attendanceDate, getAttendance])
 
   const saveEdit = (aula: Aula) => {
     updateAula(aula)
@@ -58,6 +61,7 @@ export default function AdminClasses() {
     deleteAula(aulaId)
     showToast('Aula removida.', 'success')
     setEditing(null)
+    setAttendance(null)
   }
 
   const handleAddAula = (aulaData: Omit<Aula, 'id'>) => {
@@ -76,15 +80,27 @@ export default function AdminClasses() {
     if (!attendance) return
     Object.entries(attendanceState).forEach(([userId, presence]) => {
       if (presence === 'unset') return
-      markAttendance(attendance.id, userId, presence === 'present')
+      markAttendance(attendance.id, userId, presence === 'present', attendanceDate || undefined)
     })
     showToast('Chamada registrada.', 'success')
     setAttendance(null)
   }
 
-  const currentInscritos = attendance && attendanceDay
-    ? getBookingDia(attendance, attendanceDay).inscritos
-    : []
+  const currentBooking = attendance && attendanceDay
+    ? getBookingDia(attendance, attendanceDay)
+    : { inscritos: [], filaEspera: [] }
+  const currentInscritos = currentBooking.inscritos
+  const currentFila = currentBooking.filaEspera
+
+  const DOW_MAP: Record<string, number> = {
+    'Domingo': 0, 'Segunda': 1, 'Terça': 2, 'Quarta': 3, 'Quinta': 4, 'Sexta': 5, 'Sábado': 6,
+  }
+  const isDateDayMismatch = (() => {
+    if (!attendanceDate || !attendanceDay) return false
+    const [y, mo, d] = attendanceDate.split('-').map(Number)
+    const dateDow = new Date(y, mo - 1, d).getDay()
+    return dateDow !== (DOW_MAP[attendanceDay] ?? -1)
+  })()
 
   return (
     <div className="page-container pt-4 md:pt-5 pb-6 space-y-4">
@@ -120,6 +136,13 @@ export default function AdminClasses() {
               </tr>
             </thead>
             <tbody>
+              {data.aulas.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-5 py-10 text-center text-footnote text-ios-label-3 dark:text-ios-dlabel-3">
+                    Nenhuma aula cadastrada. Clique em <strong>+ Nova aula</strong> para começar.
+                  </td>
+                </tr>
+              )}
               {data.aulas.map((a, idx) => (
                 <tr
                   key={a.id}
@@ -127,7 +150,7 @@ export default function AdminClasses() {
                 >
                   <td className="px-5 py-2.5">
                     <div className="flex items-center gap-2.5">
-                      <span className="w-1 h-5 rounded-full" style={{ background: modalidadeGradient(a.modalidade) }} />
+                      <span className="w-1 h-5 rounded-full brand-bg" />
                       <Badge variant={modalidadeVariant(a.modalidade)}>{a.modalidade}</Badge>
                     </div>
                   </td>
@@ -162,13 +185,17 @@ export default function AdminClasses() {
 
       {/* Mobile cards */}
       <div className="grid gap-2 md:hidden">
+        {data.aulas.length === 0 && (
+          <div className="ios-card p-6 text-center text-footnote text-ios-label-3 dark:text-ios-dlabel-3">
+            Nenhuma aula cadastrada. Toque em <strong>+ Nova aula</strong> para começar.
+          </div>
+        )}
         {data.aulas.map(a => (
-          <div key={a.id} className="ios-card overflow-hidden flex">
-            <div className="w-1.5 shrink-0" style={{ background: modalidadeGradient(a.modalidade) }} />
+          <div key={a.id} className="ios-card overflow-hidden flex border-l-[3px] border-l-[3px] brand-border-l">
             <div className="flex-1 p-4">
               <div className="flex items-center justify-between mb-2">
                 <Badge variant={modalidadeVariant(a.modalidade)}>{a.modalidade}</Badge>
-                <span className="text-footnote font-semibold text-ios-label dark:text-ios-dlabel tabular-nums">{a.horario}</span>
+                <span className="text-caption1 font-semibold text-ios-label-2 dark:text-ios-dlabel-2 tabular-nums">{a.horario}</span>
               </div>
               <p className="text-footnote text-ios-label dark:text-ios-dlabel">{professorNome(a.professorId)}</p>
               <p className="text-caption1 text-ios-label-3 dark:text-ios-dlabel-3 mt-1">{a.diasSemana.join(', ')}</p>
@@ -224,37 +251,69 @@ export default function AdminClasses() {
         footer={
           <div className="flex justify-end gap-2">
             <button onClick={() => setAttendance(null)} className="ios-btn-gray">Cancelar</button>
-            <button onClick={saveAttendance} className="ios-btn-primary">Salvar chamada</button>
+            <button
+              onClick={saveAttendance}
+              disabled={isDateDayMismatch}
+              className="ios-btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
+              title={isDateDayMismatch ? 'Corrija a data antes de salvar' : undefined}
+            >
+              Salvar chamada
+            </button>
           </div>
         }
       >
         {attendance && (
           <div className="space-y-4">
-            {/* Day selector */}
-            {attendance.diasSemana.length > 1 && (
-              <div className="flex gap-1.5 flex-wrap">
-                {attendance.diasSemana.map(d => (
-                  <button
-                    key={d}
-                    onClick={() => setAttendanceDay(d)}
-                    className={`px-3 py-1.5 rounded-full text-caption1 font-semibold transition-colors ${
-                      attendanceDay === d
-                        ? 'bg-tint-500 text-white shadow-tint-glow'
-                        : 'ios-fill-2 text-ios-label dark:text-ios-dlabel hover:ios-fill-1'
-                    }`}
-                  >
-                    {d}
-                  </button>
-                ))}
+            {/* Day + date selector row */}
+            <div className="flex flex-wrap items-center gap-3">
+              {attendance.diasSemana.length > 1 && (
+                <div className="flex gap-1.5 flex-wrap">
+                  {attendance.diasSemana.map(d => (
+                    <button
+                      key={d}
+                      onClick={() => setAttendanceDay(d)}
+                      className={`px-3 py-1.5 rounded-full text-caption1 font-semibold transition-colors ${
+                        attendanceDay === d
+                          ? 'bg-tint-500 text-white'
+                          : 'ios-fill-2 text-ios-label dark:text-ios-dlabel hover:ios-fill-1'
+                      }`}
+                    >
+                      {d}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className="flex items-center gap-2 ml-auto">
+                <label className="text-caption2 font-semibold uppercase tracking-wider text-ios-label-3 dark:text-ios-dlabel-3 shrink-0">
+                  Data
+                </label>
+                <input
+                  type="date"
+                  value={attendanceDate}
+                  onChange={e => setAttendanceDate(e.target.value)}
+                  className="ios-input !py-1.5 !text-caption1 w-auto"
+                />
+              </div>
+            </div>
+
+            {/* Date ↔ day-of-week mismatch warning */}
+            {isDateDayMismatch && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-sys-orange/12 text-sys-orange rounded-ios text-caption1">
+                <AlertCircle size={13} className="shrink-0" />
+                <span>A data selecionada não corresponde ao dia <strong>{attendanceDay}</strong>. Corrija antes de salvar.</span>
               </div>
             )}
 
+            {/* Enrolled students */}
             {currentInscritos.length === 0 ? (
               <p className="text-center text-footnote text-ios-label-3 dark:text-ios-dlabel-3 py-6">
                 Nenhum aluno inscrito em {attendanceDay}.
               </p>
             ) : (
               <div className="ios-card-flat overflow-hidden">
+                <p className="px-4 pt-3 pb-1 text-caption2 font-semibold uppercase tracking-wider text-ios-label-3 dark:text-ios-dlabel-3">
+                  Inscritos · {currentInscritos.length}
+                </p>
                 {currentInscritos.map(id => {
                   const st = attendanceState[id] ?? 'unset'
                   return (
@@ -292,6 +351,26 @@ export default function AdminClasses() {
                 })}
               </div>
             )}
+
+            {/* Waitlist section */}
+            {currentFila.length > 0 && (
+              <div className="ios-card-flat overflow-hidden">
+                <p className="px-4 pt-3 pb-1 text-caption2 font-semibold uppercase tracking-wider text-ios-label-3 dark:text-ios-dlabel-3">
+                  Fila de espera · {currentFila.length}
+                </p>
+                {currentFila.map((id, pos) => (
+                  <div key={id} className="ios-list-row flex items-center gap-3 px-4 py-2.5">
+                    <span className="w-6 h-6 rounded-full bg-ios-fill-2 flex items-center justify-center text-caption2 font-bold text-ios-label-3 dark:text-ios-dlabel-3 shrink-0">
+                      {pos + 1}
+                    </span>
+                    <Avatar name={userName(id)} size="sm" />
+                    <span className="flex-1 text-callout text-ios-label-2 dark:text-ios-dlabel-2">
+                      {userName(id)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </Modal>
@@ -311,6 +390,36 @@ interface EditModalProps {
 function EditAulaModal({ aula, onClose, onSave, onDelete, professoresList, sugestoes }: EditModalProps) {
   const [state, setState] = useState<Aula>(aula)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [error, setError] = useState('')
+
+  const toggleDia = (dia: string) => {
+    setState(s => ({
+      ...s,
+      diasSemana: s.diasSemana.includes(dia)
+        ? s.diasSemana.filter(d => d !== dia)
+        : [...s.diasSemana, dia],
+    }))
+    setError('')
+  }
+
+  const handleSave = () => {
+    if (!state.modalidade.trim()) { setError('Informe a modalidade.'); return }
+    if (!state.professorId) { setError('Selecione um professor.'); return }
+    if (!state.horario) { setError('Informe o horário.'); return }
+    if (Number(state.vagasTotais) < 1) { setError('Vagas deve ser ≥ 1.'); return }
+    if (state.diasSemana.length === 0) { setError('Selecione ao menos um dia.'); return }
+    // Clean bookings for removed days; initialise new days
+    const cleanedBookings = { ...state.bookingsPorDia }
+    Object.keys(cleanedBookings).forEach(dia => { if (!state.diasSemana.includes(dia)) delete cleanedBookings[dia] })
+    state.diasSemana.forEach(dia => { if (!cleanedBookings[dia]) cleanedBookings[dia] = { inscritos: [], filaEspera: [] } })
+    onSave({ ...state, bookingsPorDia: cleanedBookings })
+  }
+
+  const removedWithBookings = aula.diasSemana.filter(
+    dia => !state.diasSemana.includes(dia) && (aula.bookingsPorDia[dia]?.inscritos.length ?? 0) > 0,
+  )
+
+  const totalInscritos = Object.values(aula.bookingsPorDia).reduce((sum, b) => sum + b.inscritos.length, 0)
 
   return (
     <Modal
@@ -320,20 +429,24 @@ function EditAulaModal({ aula, onClose, onSave, onDelete, professoresList, suges
       footer={
         <div className="flex items-center justify-between gap-2">
           {confirmDelete ? (
-            <div className="flex items-center gap-2">
-              <span className="text-caption1 text-sys-red font-semibold">Confirmar exclusão?</span>
-              <button
-                onClick={() => onDelete(state.id)}
-                className="bg-sys-red text-white text-caption1 font-semibold px-3 py-1.5 rounded-full transition-colors hover:brightness-110"
-              >
-                Excluir
-              </button>
-              <button
-                onClick={() => setConfirmDelete(false)}
-                className="text-ios-label-2 dark:text-ios-dlabel-2 text-caption1 font-semibold px-3 py-1.5 rounded-full hover:bg-ios-fill-2 transition-colors"
-              >
-                Não
-              </button>
+            <div className="flex items-start gap-2 flex-col sm:flex-row sm:items-center">
+              <span className="text-caption1 text-sys-red font-semibold">
+                Excluir?{totalInscritos > 0 && ` ${totalInscritos} aluno${totalInscritos !== 1 ? 's' : ''} perderão a inscrição.`}
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => onDelete(state.id)}
+                  className="bg-sys-red text-white text-caption1 font-semibold px-3 py-1.5 rounded-full transition-colors hover:brightness-110"
+                >
+                  Excluir
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  className="text-ios-label-2 dark:text-ios-dlabel-2 text-caption1 font-semibold px-3 py-1.5 rounded-full hover:bg-ios-fill-2 transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
             </div>
           ) : (
             <button
@@ -345,12 +458,18 @@ function EditAulaModal({ aula, onClose, onSave, onDelete, professoresList, suges
           )}
           <div className="flex gap-2">
             <button onClick={onClose} className="ios-btn-gray">Cancelar</button>
-            <button onClick={() => onSave(state)} className="ios-btn-primary">Salvar</button>
+            <button onClick={handleSave} className="ios-btn-primary">Salvar</button>
           </div>
         </div>
       }
     >
       <div className="space-y-3">
+        {error && (
+          <div className="flex items-center gap-2 px-3 py-2 bg-sys-red/12 text-sys-red rounded-ios text-caption1">
+            <AlertCircle size={13} className="shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
         <FieldLabel label="Modalidade">
           <input
             type="text"
@@ -370,6 +489,7 @@ function EditAulaModal({ aula, onClose, onSave, onDelete, professoresList, suges
             onChange={e => setState(s => ({ ...s, professorId: e.target.value }))}
             className="ios-input"
           >
+            {professoresList.length === 0 && <option value="" disabled>Nenhum professor cadastrado</option>}
             {professoresList.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
           </select>
         </FieldLabel>
@@ -390,6 +510,44 @@ function EditAulaModal({ aula, onClose, onSave, onDelete, professoresList, suges
             onChange={e => setState(s => ({ ...s, vagasTotais: Number(e.target.value) }))}
             className="ios-input"
           />
+        </FieldLabel>
+        <FieldLabel label="Dias da semana">
+          <div className="flex flex-wrap gap-1.5">
+            {DIAS_SEMANA.map(dia => {
+              const active = state.diasSemana.includes(dia)
+              const enrolledOnRemoved = !active && (aula.bookingsPorDia[dia]?.inscritos.length ?? 0) > 0
+              return (
+                <button
+                  key={dia}
+                  type="button"
+                  onClick={() => toggleDia(dia)}
+                  className={`relative px-3.5 py-2 rounded-full text-caption1 font-semibold transition-all active:scale-[0.97] ${
+                    active
+                      ? 'bg-tint-500 text-white'
+                      : 'ios-fill-2 text-ios-label dark:text-ios-dlabel hover:ios-fill-1'
+                  }`}
+                >
+                  {dia}
+                  {active && (aula.bookingsPorDia[dia]?.inscritos.length ?? 0) > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-sys-orange text-white text-[9px] font-bold flex items-center justify-center leading-none">
+                      {aula.bookingsPorDia[dia]!.inscritos.length}
+                    </span>
+                  )}
+                  {enrolledOnRemoved && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-sys-red text-white text-[9px] font-bold flex items-center justify-center leading-none">
+                      {aula.bookingsPorDia[dia]!.inscritos.length}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+          {removedWithBookings.length > 0 && (
+            <div className="flex items-start gap-1.5 mt-2 text-caption1 text-sys-orange">
+              <AlertCircle size={12} className="shrink-0 mt-0.5" />
+              <span>Remover {removedWithBookings.join(', ')} cancela {removedWithBookings.reduce((s, d) => s + (aula.bookingsPorDia[d]?.inscritos.length ?? 0), 0)} inscrição(ões) desse(s) dia(s).</span>
+            </div>
+          )}
         </FieldLabel>
       </div>
     </Modal>
@@ -456,7 +614,7 @@ function NewAulaModal({ onClose, onSave, professoresList, sugestoes }: NewModalP
             <div className="flex items-center gap-2 mt-2">
               <span
                 className="inline-block w-3 h-3 rounded-full"
-                style={{ background: modalidadeGradient(modalidade.trim()) }}
+                style={{ background: 'var(--brand)' }}
               />
               <span className="text-caption2 text-ios-label-3 dark:text-ios-dlabel-3">
                 Cor atribuída automaticamente
@@ -467,6 +625,7 @@ function NewAulaModal({ onClose, onSave, professoresList, sugestoes }: NewModalP
 
         <FieldLabel label="Professor">
           <select value={professorId} onChange={e => setProfessorId(e.target.value)} className="ios-input">
+            {professoresList.length === 0 && <option value="" disabled>Nenhum professor cadastrado</option>}
             {professoresList.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
           </select>
         </FieldLabel>
@@ -485,7 +644,7 @@ function NewAulaModal({ onClose, onSave, professoresList, sugestoes }: NewModalP
                   onClick={() => toggleDia(dia)}
                   className={`px-3.5 py-2 rounded-full text-caption1 font-semibold transition-all active:scale-[0.97] ${
                     active
-                      ? 'bg-tint-500 text-white shadow-tint-glow'
+                      ? 'bg-tint-500 text-white'
                       : 'ios-fill-2 text-ios-label dark:text-ios-dlabel hover:ios-fill-1'
                   }`}
                 >
