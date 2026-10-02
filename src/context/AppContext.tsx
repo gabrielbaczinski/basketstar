@@ -3,7 +3,7 @@ import type { AppData, Usuario, Aula, Aviso, Mensagem, Configuracoes, Attendance
 import { loadData, saveData, getCurrentUserId, setCurrentUser, clearCurrentUser, resetAppData } from '../data/storage'
 import { getBookingDia } from '../utils/aulaUtils'
 
-type BookResult = 'booked' | 'waitlisted' | 'full' | 'already_booked' | 'inactive' | 'conflict'
+type BookResult = 'booked' | 'waitlisted' | 'full' | 'already_booked' | 'inactive' | 'conflict' | 'too_far'
 type LoginResult = 'ok' | 'inactive' | 'not_found'
 type CancelResult = 'ok' | 'too_late' | 'not_found' | 'removed_from_waitlist'
 
@@ -111,6 +111,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         return a.bookingsPorDia[dia]?.inscritos.includes(currentUserId) ?? false
       })
       if (hasConflict) return 'conflict'
+
+      const limit = data.configuracoes.diasAntecedenciaAgendamento
+      if (limit > 0) {
+        const todayDow = new Date().getDay()
+        const classDow = DIA_TO_DOW[dia] ?? -1
+        if (classDow >= 0) {
+          const daysUntil = classDow >= todayDow ? classDow - todayDow : 7 - (todayDow - classDow)
+          if (daysUntil > limit) return 'too_far'
+        }
+      }
     }
     let result: BookResult | null = null
     updateData(d => {

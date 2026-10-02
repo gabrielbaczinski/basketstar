@@ -482,6 +482,14 @@ export default function StudentClasses() {
     else if (res === 'waitlisted') showToast('Você já está na fila de espera deste horário.', 'info')
     else if (res === 'inactive') showToast('Matrícula inativa. Procure a recepção para regularizar.', 'warning')
     else if (res === 'conflict') showToast('Você já tem outra aula neste mesmo horário.', 'warning')
+    else if (res === 'too_far') {
+      const DOW: Record<string, number> = { 'Domingo': 0, 'Segunda': 1, 'Terça': 2, 'Quarta': 3, 'Quinta': 4, 'Sexta': 5, 'Sábado': 6 }
+      const classDow = DOW[dia] ?? 0
+      const todayDow = new Date().getDay()
+      const daysUntil = classDow >= todayDow ? classDow - todayDow : 7 - (todayDow - classDow)
+      const daysToWait = daysUntil - data.configuracoes.diasAntecedenciaAgendamento
+      showToast(`Disponível para agendamento em ${daysToWait} dia${daysToWait !== 1 ? 's' : ''}.`, 'info')
+    }
     else if (res === 'full') setFullModal({ aula, dia })
   }
 

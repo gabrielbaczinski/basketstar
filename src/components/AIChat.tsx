@@ -393,6 +393,7 @@ export default function AIChat() {
       already_booked: 'Você já está inscrito nessa aula.',
       conflict: 'Você já tem outra aula nesse horário.',
       inactive: 'Seu plano está inativo. Entre em contato com a academia.',
+      too_far: 'Esta aula ainda não está disponível para agendamento. Tente mais perto da data.',
     }
     pushBot({ text: texts[result] ?? 'Não foi possível agendar. Tente pela página de Aulas.' })
   }
